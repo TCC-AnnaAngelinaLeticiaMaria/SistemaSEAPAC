@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
 
@@ -7,6 +6,9 @@ services:
     env_file: ".env"
     volumes:
       - pgdata:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    restart: always
 
   django:
     build:
@@ -16,34 +18,33 @@ services:
     command: ./start
     volumes:
       - media_data:/app/media
-      - static_data:/app/static
+      - static_data:/app/staticfiles
     env_file: ".env"
     depends_on:
       - postgres
     restart: always
+    ports:
+    - "5000:5000"
 
-  nginx:
-    build:
-      context: .
-      dockerfile: ./compose/nginx/Dockerfile
-    volumes:
-      - media_data:/app/media
-      - static_data:/app/static
-    environment:
-      VIRTUAL_HOST: seapac.nadic.ifrn.edu.br
-      VIRTUAL_POST: 80
-      LETSENCRYPT_HOST: seapac.nadic.ifrn.edu.br
-    networks:
-      - web-proxy
-      - default
-    restart: unless-stopped
-  
 volumes:
   pgdata:
   media_data:
   static_data:
 
-networks:
-  web-proxy:
-   external: true
+#  nginx:
+#    build:
+#      context: .
+#      dockerfile: ./compose/nginx/Dockerfile
+#    volumes:
+#      - media_data:/app/media
+#      - static_data:/app/static
+#    environment:
+#      VIRTUAL_HOST: seapac.nadic.ifrn.edu.br
+#      VIRTUAL_POST: 80
+#      LETSENCRYPT_HOST: seapac.nadic.ifrn.edu.br
+#    networks:
+#      - web-proxy
+#      - default
+#    restart: unless-stopped
+
   
