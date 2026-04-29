@@ -6,8 +6,6 @@ services:
     env_file: ".env"
     volumes:
       - pgdata:/var/lib/postgresql
-    ports:
-      - "5432:5432"
     restart: always
 
   django:
@@ -24,16 +22,25 @@ services:
       - postgres
     restart: always
 
-  nginx:
+volumes:
+  pgdata:
+  media_data:
+  static_data:
+
+nginx:
     build:
       context: .
       dockerfile: ./compose/nginx/Dockerfile
     volumes:
       - media_data:/app/media
       - static_data:/app/static
-    ports:
-    - "82:80"
-volumes:
-  pgdata:
-  media_data:
-  static_data:  
+    environment:
+      VIRTUAL_HOST: seapac.nadic.ifrn.edu.br
+      VIRTUAL_POST: 80
+      LETSENCRYPT_HOST: seapac.nadic.ifrn.edu.br
+    networks:
+      - web-proxy
+      - default
+    restart: unless-stopped
+
+  
