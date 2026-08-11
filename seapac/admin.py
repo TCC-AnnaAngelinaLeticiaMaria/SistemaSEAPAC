@@ -123,7 +123,6 @@ class TimelineEventAdmin(admin.ModelAdmin):
     list_display = ("titulo", "family", "data", "secao")
     list_filter = ("data",)
     search_fields = ("titulo", "descricao", "family__nome_titular")
-    date_hierarchy = "data"
     list_select_related = ("family",)
 
 
@@ -132,5 +131,4 @@ class EventoAdmin(admin.ModelAdmin):
     list_display = ("titulo", "familia", "data", "confirmado")
     list_filter = ("confirmado",)
     search_fields = ("titulo", "familia__nome_titular")
-    date_hierarchy = "data"
     list_select_related = ("familia",)

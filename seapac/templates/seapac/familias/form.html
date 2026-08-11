@@ -1,4 +1,12 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
+
+{% endblock extra_head %}
+
 
 {% block center %}
 <div class="container py-4">

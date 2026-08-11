@@ -1,13 +1,14 @@
 {% load static %}
 <div class="family-card">
     <div class="family-header">
-        <h3 class="family-name">{{ family.get_nome_familia}}</h3>
+        <h3 class="family-name">{{ family.get_nome_familia }}</h3>
+        <!--
         <span class="family-status {{ family.get_nivel|lower }}">
             <i class="fas fa-circle"></i>
             {{ family.get_nivel }}
         </span>
+        -->
     </div>
-    
     <div class="family-info">
         <div class="info-item">
             <i class="fas fa-user"></i>
@@ -26,7 +27,7 @@
             <span>{{ family.get_visitas_confirmadas }} visitas realizadas</span>
         </div>
     </div>
-    
+<!--   
     <div class="family-score">
         <div class="score-label">Pontuação:</div>
         <div class="score-value">{{ family.get_pontuacao }}/100</div>
@@ -34,7 +35,7 @@
             <div class="score-progress" style="width: {{ family.get_pontuacao }}%"></div>
         </div>
     </div>
-    
+--> 
     <div class="family-actions">
         <button class="btn btn-outline btn-sm act-btn" onclick="redirect('{% url 'detail_family' family.id %}')">
             <i class="fas fa-eye"></i>

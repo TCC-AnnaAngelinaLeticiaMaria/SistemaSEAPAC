@@ -1,9 +1,13 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     {% include "partials/head.html" %}
     <title>{% block title %}{% endblock title %} | Sistema SEAPAC</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    {% block extra_head %}
+    {% endblock extra_head %}
 </head>
 <body>
     {% include "partials/header.html" %}
@@ -37,6 +41,15 @@
             }
         });
         }
+
+        $(document).ready(function() {
+            $('#municipio').select2();
+        });
+
+        $(document).ready(function() {
+            $('#subsystemFilter').select2();
+        });
+
     </script>
     {% endblock %}
 </body>

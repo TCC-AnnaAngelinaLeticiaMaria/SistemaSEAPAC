@@ -34,7 +34,7 @@ LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
 
 class Family(models.Model):
     nome_titular = models.CharField(max_length=30)
-    data_inicio = models.DateField()
+    data_inicio = models.PositiveSmallIntegerField()
     contato = models.CharField(max_length=30)
     municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE)
     projetos = models.ManyToManyField("Project", blank=True)
@@ -264,13 +264,18 @@ class Project(models.Model):
 
 
 class TimelineEvent(models.Model):
+    TYPE_SECTION = [
+        ("mundo-externo", "Externo"),
+        ("mundo-interno", "Interno")
+    ]
+
     family = models.ForeignKey(
         Family, on_delete=models.CASCADE, related_name="timeline_events"
     )
-    secao = models.CharField(max_length=100, blank=True)
+    secao = models.CharField(max_length=100, choices=TYPE_SECTION, blank=True)
     titulo = models.CharField(max_length=100)
     descricao = models.TextField(blank=True)
-    data = models.DateField()
+    data = models.PositiveSmallIntegerField()
 
     def __str__(self):
         return f"{self.titulo} - {self.family.get_nome_familia()}"
@@ -278,7 +283,7 @@ class TimelineEvent(models.Model):
 
 class Evento(models.Model):
     titulo = models.CharField(max_length=200)
-    data = models.DateField()
+    data = models.PositiveSmallIntegerField()
 
     familia = models.ForeignKey(
         Family, on_delete=models.CASCADE, related_name="eventos"

@@ -133,7 +133,7 @@ def edit_family(request, id):
 @never_cache
 @login_required
 def list_families(request):
-    level = request.GET.get("nivel")
+    # level = request.GET.get("nivel")
     query = request.GET.get("q")
     subsystem_name = request.GET.get("subsystem")
 
@@ -147,12 +147,12 @@ def list_families(request):
             subsistemas__nome_subsistema=subsystem_name
         ).distinct()
 
-    if level:
-        try:
-            level_label = dict(LEVEL_CHOICES).get(int(level))
-            families = [f for f in families if f.get_nivel() == level_label]
-        except (ValueError, TypeError):
-            pass
+    # if level:
+    #     try:
+    #         level_label = dict(LEVEL_CHOICES).get(int(level))
+    #         families = [f for f in families if f.get_nivel() == level_label]
+    #     except (ValueError, TypeError):
+    #         pass
 
     paginator = Paginator(families, 4)
     page_number = request.GET.get("page")
@@ -162,13 +162,14 @@ def list_families(request):
 
     context = {
         "title": "Lista de Famílias",
-        "nivel_selecionado": level,
+    #    "nivel_selecionado": level,
         "query": query,
         "page_obj": page_obj,
         "families": page_obj,
         "subsystems": subsystems,
         "subsystem_selected": subsystem_name,
         "objeto": "familias",
+        "families_list": families,
     }
     return render(request, "seapac/familias/list_families.html", context)
 
@@ -784,25 +785,26 @@ def timeline(request, id):
     family = get_object_or_404(Family, id=id)
     timeline_events = family.timeline_events.all().order_by("data")
 
-    secoes = {}
-    for evento in timeline_events:
-        if evento.secao not in secoes:
-            secoes[evento.secao] = []
-        secoes[evento.secao].append(evento)
+#    secoes = {}
+#    for evento in timeline_events:
+#        if evento.secao not in secoes:
+#            secoes[evento.secao] = []
+#        secoes[evento.secao].append(evento)
 
-    conteudo_mermaid = "timeline\n"
-    for secao, eventos in secoes.items():
-        conteudo_mermaid += f"    section {secao}\n"
-        for evento in eventos:
-            conteudo_mermaid += (
-                f"        {evento.data} : {evento.titulo} - {evento.descricao}\n"
-            )
+#    conteudo_mermaid = "timeline\n"
+#    for secao, eventos in secoes.items():
+#        conteudo_mermaid += f"    section {secao}\n"
+#        for evento in eventos:
+#            conteudo_mermaid += (
+#                f"        {evento.data} : {evento.titulo} - {evento.descricao}\n"
+#            )
 
     context = {
         "id": id,
         "family": family,
+        "events": timeline_events,
         "title": "Linha do Tempo",
-        "conteudo_mermaid": conteudo_mermaid,
+#        "conteudo_mermaid": conteudo_mermaid,
     }
     return render(request, "seapac/timeline/timeline.html", context)
 
@@ -834,7 +836,7 @@ def add_timeline(request, id):
 def edit_timeline(request, id, event_id):
     family = get_object_or_404(Family, id=id)
     event = get_object_or_404(TimelineEvent, id=event_id, family=family)
-    timeline_events = family.timeline_events.all().order_by("-data")
+    timeline_events = family.timeline_events.all().order_by("data")
 
     if request.method == "POST":
         form = TimelineEventEditForm(request.POST, instance=event)

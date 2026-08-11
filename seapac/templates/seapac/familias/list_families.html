@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block center %}
 
 <h1 class='title'>{% block title %}{{ title }}{% endblock title %}</h1>
 <div class="controls-section">
     <form method="GET" class="filter-form" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+<!--
         <div class="control-group">
             <i class="fas fa-filter"></i>
             <label for="levelFilter">Nível</label>
@@ -15,12 +17,14 @@
                 <option value="3" {% if nivel_selecionado == '3' %}selected{% endif %}>Avançado</option>
             </select>
         </div>
-
+-->
         <div class="control-group">
-            <i class="fas fa-filter"></i>
-            <label for="subsystemFilter">Subsistema</label>
+            <div>
+                <i class="fas fa-filter"></i>
+                <label for="subsystemFilter">Subsistema</label>
+            </div>
             <select id="subsystemFilter" class="control-select" name="subsystem">
-                <option value="">Todos os subsistemas</option>
+                <option value="">Todos</option>
                 {% for subsystem in subsystems %}
                     <option value="{{ subsystem.nome_subsistema }}" 
                             {% if subsystem_selected == subsystem.nome_subsistema %}selected{% endif %}>
@@ -50,13 +54,13 @@
         </div>
 
         {% if page_obj.has_other_pages %}
-            {% with query_string="&nivel="|add:nivel_selecionado|add:"&subsystem="|add:subsystem_selected|add:"&q="|add:query %}
+            {% with query_string="&subsystem="|add:subsystem_selected|add:"&q="|add:query %}
             <nav aria-label="Navegação de páginas">
                 <ul class="pagination justify-content-center"> 
                     
                     {% if page_obj.has_previous %}
                         <li class="page-item"> 
-                            <a class="page-link" 
+                            <a class="page-link" style="color: #4a7c59;"
                             href="?page={{ page_obj.previous_page_number }}{{ query_string }}"
                             aria-label="Anterior">
                                 &laquo; Anterior
@@ -71,9 +75,9 @@
                     {% for num in page_obj.paginator.page_range %}
                         <li class="page-item {% if page_obj.number == num %}active{% endif %}">
                             {% if page_obj.number == num %}
-                                <span class="page-link">{{ num }}</span> 
+                                <span class="page-link" style="background-color: #4a7c59; border: 0;">{{ num }}</span> 
                             {% else %}
-                                <a class="page-link"
+                                <a class="page-link" style="color: #4a7c59;"
                                 href="?page={{ num }}{{ query_string }}">
                                 {{ num }}
                                 </a>
@@ -83,7 +87,7 @@
 
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link"
+                            <a class="page-link" style="color: #4a7c59;"
                             href="?page={{ page_obj.next_page_number }}{{ query_string }}"
                             aria-label="Próxima">
                                 Próxima &raquo;
@@ -91,7 +95,7 @@
                         </li>
                     {% else %}
                         <li class="page-item disabled">
-                            <span class="page-link" aria-hidden="true">Próxima &raquo;</span>
+                            <span class="page-link" aria-hidden="true" style="color: #4a7c59;">Próxima &raquo;</span>
                         </li>
                     {% endif %}
                 </ul>
