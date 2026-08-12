@@ -8,16 +8,16 @@
 {% endblock extra_head %}
 
 {% block center %}
-<div class="flow-header">
-    <div class="flow-header-main">
-        <h1 class='title'>{% block title %}{{ title }}{% endblock title %} da {{ family.get_nome_familia }}</h1>
-    </div>
-</div>
 
 <form method="post">
     {% csrf_token %}
-    <div class="subsystem-btn-submit">
-        <button type="submit" class="btn btn-success">Salvar Subsistemas</button>
+    <div class="flow-header">
+        <div class="flow-header-main">
+            <h1 class='title'>{% block title %}{{ title }}{% endblock title %} da {{ family.get_nome_familia }}</h1>
+        </div>
+        <div class="subsystem-btn-submit">
+            <button type="submit" class="btn btn-success">Salvar Subsistemas</button>
+        </div>
     </div>
     <div class="form-sandbox">
         {% for subsystem in subsystems %}

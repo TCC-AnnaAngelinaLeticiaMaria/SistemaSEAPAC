@@ -61,6 +61,13 @@
 form {
     display: flex;
     flex-direction: column;
+    gap: 20px;
+    position: relative;
+}
+
+.flow-header {
+    display: flex;
+    justify-content: space-between;
 }
 
 form .subsystem-btn-submit {
@@ -70,10 +77,9 @@ form .subsystem-btn-submit {
 
 .form-sandbox {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
     row-gap: 20px;
     column-gap: 20px;
-    overflow: auto;
 }
 
 .form-subsystem-block {
@@ -115,6 +121,11 @@ form .subsystem-btn-submit {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
+    padding: 5px 5px 5px 0;
+}
+
+.subsys-info .name-subsys {
+    text-align: left;
 }
 
 .subsys-info .subsys-type {
@@ -159,3 +170,19 @@ form .subsystem-btn-submit {
     text-align: center;
 }
 
+@media (max-width: 768px) {
+
+    .flow-header .subsystem-btn-submit {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: rgba(0, 0, 0, 0.25) 10px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+        z-index: 2;
+    }
+}

@@ -35,6 +35,8 @@ from django.http import FileResponse
 from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse
+from django.views import View
+import pandas as pd
 
 import json
 
@@ -87,6 +89,7 @@ def dashboard(request):
 
 
 # --------------CRUD FAMILIAS (COMPLETO)--------------
+
 @never_cache
 @login_required
 def register(request):
