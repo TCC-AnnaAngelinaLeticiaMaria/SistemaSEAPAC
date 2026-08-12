@@ -6,57 +6,126 @@
     {% block title %}{{ title }}{% endblock title %} {{ family.get_nome_familia }}
 </h1>
 
+
+<div class="card table">
+    <h2><strong>Valores Reais</strong><small>(apenas monetário)</small></h2>
+    <div class="card-line space-between">
+        <span>Receita</span>
+        <span class="green-font">R$ {{ total_receita }}</span>
+    </div>
+    <div class="card-line space-between">
+        <span>Custo total</span>
+        <span class="red-font">R$ {{ total_custo }}</span>
+    </div>
+
+    <hr>
+
+    <div class="lucro-view">
+        <div class="card-line space-between">
+            <span>Lucro líquido</span>
+            <span>R$ {{ renda_total }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="card table">
+    <h2><strong>Valores Potenciais</strong><small>(monetário + não monetário)</small></h2>
+    <div class="card-line space-between">
+        <span>Receita não monetária</span>
+        <span class="green-font">R$ {{ total_receita_potencial }}</span>
+    </div>
+    <div class="card-line space-between">
+        <span>Custo total</span>
+        <span class="red-font">R$ {{ total_custo }}</span>
+    </div>
+
+    <hr>
+    
+    <div class="lucro-view">
+        <div class="card-line space-between">
+            <span>Lucro não monetário</span>
+            <span>R$ {{ renda_total_potencial }}</span>
+        </div>
+        <p class="text-muted">
+            Diferença de <strong>R$ {{ diferenca }}</strong> entre o valor real e o potencial.
+        </p>
+    </div>
+</div>
+
+
+
+<h2 class="title">Do que foi vendido (valores monetários)</h2>
 <table class="table table-striped">
     <thead>
         <tr>
             <th>Subsistema</th>
             <th>Produto</th>
             <th>Quantidade</th>
-            <th>Valor Unitário (R$)</th>
-            <th>Valor Não Monetário (R$)</th>
+            <th>Unidade</th>
             <th>Custo Unitário (R$)</th>
-            <th>Receita Total (R$)</th>
-            <th>Receita Somada (R$)</th>
+            <th>Valor Unitário (R$)</th>
             <th>Custo Total (R$)</th>
-            <th><strong>Lucro (R$)</strong></th>
-            <th><strong>Lucro Somado (R$)</strong></th>
+            <th>Receita (R$)</th>           
+            <th>Lucro (R$)</th>
         </tr>
     </thead>
     <tbody>
     {% for p in produtos  %}
         {% if p.qtd != 0 %}
-        <tr>
-            <td>{{ p.subsistema }}</td>
-            <td>{{ p.produto }}</td>
-            <td>{{ p.qtd }}</td>
-            <td>{{ p.valor|floatformat:2 }}</td>
-            <td>{{ p.valor_potencial|floatformat:2 }}</td>
-            <td>{{ p.custo|floatformat:2 }}</td>
-            <td>{{ p.receita|floatformat:2 }}</td>
-            <td>{{ p.receita_potencial|floatformat:2 }}</td>
-            <td>{{ p.custo_total|floatformat:2 }}</td>
-            <td><strong>{{ p.lucro|floatformat:2 }}</strong></td>
-            <td><strong>{{ p.lucro_potencial|floatformat:2 }}</strong></td>
-        </tr>
+            {% if p.valor and p.valor != '0,00' %}
+            <tr>
+                <td>{{ p.subsistema }}</td>
+                <td>{{ p.produto }}</td>
+                <td>{{ p.qtd_vendida }}</td>
+                <td>{{ p.unidade }}</td>
+                <td>{{ p.custo }}</td>
+                <td>{{ p.valor }}</td>
+                <td>{{ p.custo_vendido }}</td>
+                <td>{{ p.receita }}</td>
+                <td><strong>{{ p.lucro }}</strong></td>
+            </tr>
+            {% endif %}
         {% endif %}
     {% endfor %}
     </tbody>
 </table>
 
-<hr>
 
-<div class="text-end mt-4">
-    <p><strong>Total recebido (receita):</strong> R$ {{ total_receita|floatformat:2 }}</p>
-    <p><strong>Total gasto (custo):</strong> R$ {{ total_custo|floatformat:2 }}</p>
-    <h4><strong>Renda total (lucro líquido):</strong> R$ {{ renda_total|floatformat:2 }}</h4>
-
-    <hr>
-
-    <p><strong>Receita Não Monetária (se vendido todos os produtos):</strong> R$ {{ total_receita_potencial|floatformat:2 }}</p>
-    <h4><strong>Renda Somada (lucro líquido não monetário):</strong> R$ {{ renda_total_potencial|floatformat:2 }}</h4>
-    <p class="text-muted">
-        Diferença de <strong>R$ {{ diferenca }}</strong> entre o valor real e o potencial.
-    </p>
-</div>
+<h2 class="title">Do que foi produzido, mas não vendido (valores não monetários)</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Subsistema</th>
+            <th>Produto</th>
+            <th>Quantidade</th>
+            <th>Unidade</th>
+            <th>Custo Unitário (R$)</th>
+            <th>Valor Unitário (R$)<br><small>Não monetário</small></th>
+            <th>Custo Total (R$)</th>
+            <th>Receita (R$)<br><small>Não monetário</small></th>           
+            <th>Lucro (R$)<br>
+                <small>Não monetário</small></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for p in produtos  %}
+        {% if p.qtd != 0 %}
+            {% if p.valor_potencial != '0,00' %}
+            <tr>
+                <td>{{ p.subsistema }}</td>
+                <td>{{ p.produto }}</td>
+                <td>{{ p.qtd_naovendida }}</td>
+                <td>{{ p.unidade }}</td>
+                <td>{{ p.custo }}</td>
+                <td>{{ p.valor_potencial }}</td>
+                <td>{{ p.custo_nao_vendido }}</td>
+                <td>{{ p.receita_potencial }}</td>
+                <td><strong>{{ p.lucro_potencial }}</strong></td>
+            </tr>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
 
 {% endblock %}

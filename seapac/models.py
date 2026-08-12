@@ -2,7 +2,7 @@ from django.db import models
 import os
 from django.conf import settings
 from PIL import Image
-
+from babel.numbers import format_decimal
 
 class Technician(models.Model):
     STATUS_CHOICES = [
@@ -88,6 +88,10 @@ class Family(models.Model):
     def get_visitas_confirmadas(self):
         return self.eventos.filter(confirmado=True).count()
 
+    def formatar_valor(self, valor):
+        return format_decimal(valor, locale='pt_BR', format='#,##0.00')
+
+
     def calcular_renda(self):
         dados_produtos = []
         total_receita = 0
@@ -112,6 +116,7 @@ class Family(models.Model):
                         "custo_unitario": 0,
                         "qtd_total": 0,
                         "qtd_vendida": 0,
+                        "unidade": "Não definida",
                         "custo_total": 0,
                     }
 
@@ -120,8 +125,12 @@ class Family(models.Model):
                     valor = fluxo.get("valor") or 0
                     valor_potencial = fluxo.get("valor_potencial") or 0
                     custo = fluxo.get("custo") or 0
+                    und = fluxo.get("und") or "Não definida"
 
                     produtos_dict[nome]["qtd_total"] += qtd
+                    produtos_dict[nome]["und"] = (
+                        und or produtos_dict[nome]["und"]
+                    )
                     produtos_dict[nome]["valor_potencial"] = (
                         valor_potencial or produtos_dict[nome]["valor_potencial"]
                     )
@@ -134,13 +143,21 @@ class Family(models.Model):
                         produtos_dict[nome]["valor_unitario"] = valor
                         produtos_dict[nome]["qtd_vendida"] += qtd
 
+
             for nome, dados in produtos_dict.items():
                 qtd_total = dados["qtd_total"]
                 qtd_vendida = dados["qtd_vendida"]
+                
+                unidade = dados["unidade"]
                 valor_unitario = dados["valor_unitario"]
                 valor_potencial = dados["valor_potencial"]
                 custo_unitario = dados["custo_unitario"]
                 custo_total = dados["custo_total"]
+
+                qtd_nao_vendida = dados["qtd_total"] - dados["qtd_vendida"]
+
+                custo_vendido = qtd_vendida * custo_unitario
+                custo_nao_vendido = qtd_nao_vendida * custo_unitario
 
                 receita_real = valor_unitario * qtd_vendida
                 lucro_real = receita_real - custo_total
@@ -153,30 +170,38 @@ class Family(models.Model):
                         "subsistema": fs.subsystem.nome_subsistema,
                         "produto": nome,
                         "qtd": qtd_total,
-                        "valor": valor_unitario,
-                        "valor_potencial": valor_potencial,
-                        "custo": custo_unitario,
-                        "receita": receita_real,
-                        "receita_potencial": receita_potencial,
-                        "custo_total": custo_total,
-                        "lucro": lucro_real,
-                        "lucro_potencial": lucro_potencial,
+                        "qtd_vendida": qtd_vendida,
+                        "qtd_naovendida": qtd_nao_vendida,
+                        "unidade": und,
+                        "valor": self.formatar_valor(valor_unitario),
+                        "valor_potencial": self.formatar_valor(valor_potencial),
+                        "custo": self.formatar_valor(custo_unitario),
+                        "custo_vendido": self.formatar_valor(custo_vendido),
+                        "custo_nao_vendido": self.formatar_valor(custo_nao_vendido),
+                        "receita": self.formatar_valor(receita_real),
+                        "receita_potencial": self.formatar_valor(receita_potencial),
+                        "custo_total": self.formatar_valor(custo_total),
+                        "lucro": self.formatar_valor(lucro_real),
+                        "lucro_potencial": self.formatar_valor(lucro_potencial),
                     }
                 )
 
-                total_receita += receita_real
+                total_receita += receita_real               
                 total_custo += custo_total
                 renda_total += lucro_real
                 total_receita_potencial += receita_potencial
                 renda_total_potencial += lucro_potencial
 
+        diferenca = renda_total_potencial - renda_total
+
         return {
             "produtos": dados_produtos,
-            "total_receita": total_receita,
-            "total_custo": total_custo,
-            "renda_total": renda_total,
-            "total_receita_potencial": total_receita_potencial,
-            "renda_total_potencial": renda_total_potencial,
+            "total_custo": self.formatar_valor(total_custo),
+            "total_receita": self.formatar_valor(total_receita),
+            "total_receita_potencial": self.formatar_valor(total_receita_potencial),
+            "renda_total":self.formatar_valor(renda_total),
+            "renda_total_potencial": self.formatar_valor(renda_total_potencial),
+            "diferenca": self.formatar_valor(diferenca),
         }
 
 

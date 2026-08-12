@@ -193,8 +193,6 @@ def renda_familiar(request, id):
     family = get_object_or_404(Family, id=id)
     resultado = family.calcular_renda()
 
-    diferenca = resultado["renda_total_potencial"] - resultado["renda_total"]
-
     context = {
         "family": family,
         "produtos": resultado["produtos"],
@@ -204,7 +202,7 @@ def renda_familiar(request, id):
         "total_receita_potencial": resultado["total_receita_potencial"],
         "renda_total_potencial": resultado["renda_total_potencial"],
         "title": f"Renda da ",
-        "diferenca": diferenca,
+        "diferenca": resultado["diferenca"],
     }
     return render(request, "seapac/familias/renda_familiar.html", context)
 
