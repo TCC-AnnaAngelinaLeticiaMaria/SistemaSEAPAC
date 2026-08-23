@@ -22,6 +22,7 @@ from .forms import (
     TechnicianEditForm,
     SubsystemEditForm,
     TimelineEventEditForm,
+    ImportarPlanilha,
 )
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -30,13 +31,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 from .reports.pdf import gerar_relatorio_family
 from django.core.paginator import Paginator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.staticfiles import finders
+from django.http import HttpResponse
 from django.forms import formset_factory
 from django.http import FileResponse
 from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.views import View
+from weasyprint import HTML, CSS
 import pandas as pd
+import unicodedata
+import os
 
 import json
 
@@ -63,21 +70,18 @@ def dashboard(request):
     )
     total_families = Family.objects.count()
     total_tecnicos = Technician.objects.count()
-    total_avancado = len(
-        [f for f in Family.objects.all() if f.get_nivel() == "Avancado"]
-    )
-    total_intermediario = len(
-        [f for f in Family.objects.all() if f.get_nivel() == "Intermediario"]
-    )
-    total_inicial = len([f for f in Family.objects.all() if f.get_nivel() == "Inicial"])
+#    total_avancado = len(
+#        [f for f in Family.objects.all() if f.get_nivel() == "Avancado"]
+#    )
+#    total_intermediario = len(
+#        [f for f in Family.objects.all() if f.get_nivel() == "Intermediario"]
+#    )
+#    total_inicial = len([f for f in Family.objects.all() if f.get_nivel() == "Inicial"])
     total_visitas = Evento.objects.count()
 
     context = {
         "families": families,
         "total_families": total_families,
-        "total_avancado": total_avancado,
-        "total_intermediario": total_intermediario,
-        "total_inicial": total_inicial,
         "title": "Página Inicial - Dashboard",
         "nivel_selecionado": level,
         "query": query,
@@ -89,6 +93,68 @@ def dashboard(request):
 
 
 # --------------CRUD FAMILIAS (COMPLETO)--------------
+
+def normalizarColunas(coluna_nome):
+        coluna_nome = str(coluna_nome).strip().lower()
+
+        coluna_nome = unicodedata.normalize('NFKD', coluna_nome)
+        coluna_nome = ''.join(caractere for caractere in coluna_nome if not unicodedata.combining(caractere))
+
+        return ' '.join(coluna_nome.split())
+
+def verificarCampos(dataFrame, campos):
+    colunas = {}
+
+    for coluna in dataFrame.columns:
+        colunas[normalizarColunas(coluna)] = coluna
+
+    for campo in campos:
+        campo = normalizarColunas(campo)
+        if campo in colunas:
+            return colunas[campo]
+
+    return None
+    
+
+
+class ImportarDadosExcel(View, LoginRequiredMixin):
+
+    def get(self, request):
+        familia = Family.objects.all()
+        form =  ImportarPlanilha()
+        return render(request, "seapac/familias/importardados.html", {'form': form, 'familia': familia})
+
+    def post(self, request):
+
+        form = ImportarPlanilha(request.POST, request.FILES)
+
+        if form.is_valid():
+            arq = request.FILES['arquivo']
+            dataFrame = pd.read_excel(arq)
+
+            campo_nome = verificarCampos(dataFrame, ['Nome Completo', 'Nome', 'Nome do Titular'])
+
+            campo_contato = verificarCampos(dataFrame, ['Telefone', 'Celular', 'Contato'])
+
+            campo_municipio = verificarCampos(dataFrame, ['Município', 'Municipio'])
+
+            for _, row in dataFrame.iterrows():
+                municipio, created1 = Municipality.objects.get_or_create(
+                    nome=row[campo_municipio],
+                    comunidade=row['Comunidade']
+                )
+
+                familia, created2 = Family.objects.get_or_create(
+                    nome_titular= row[campo_nome],
+                    municipio= municipio, 
+                    defaults={
+                        'contato': row[campo_contato]
+                    }
+                )
+            return redirect('dashboard')
+        return render(request, "seapac/familias/importardados.html", {'form': form})
+
+
 
 @never_cache
 @login_required
@@ -161,6 +227,8 @@ def list_families(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
+    page_range = paginator.get_elided_page_range(number=page_obj.number, on_each_side=1, on_ends=2)
+
     subsystems = Subsystem.objects.all()
 
     context = {
@@ -173,6 +241,7 @@ def list_families(request):
         "subsystem_selected": subsystem_name,
         "objeto": "familias",
         "families_list": families,
+        'page_range': page_range,
     }
     return render(request, "seapac/familias/list_families.html", context)
 
@@ -631,7 +700,7 @@ def edit_flow(request, id):
         selected = request.POST.getlist("subsistemas")
         family.subsistemas.set(selected)
         family.save()
-        return redirect("dashboard")
+        return redirect("flow", id=family.id)
     return render(
         request,
         "seapac/formflow.html",
@@ -833,6 +902,17 @@ def add_timeline(request, id):
         {"form": form, "title": "Adicionar Evento à Timeline", "family": family},
     )
 
+@never_cache
+@login_required
+def delete_timeline(request, id, event_id):
+    family = get_object_or_404(Family, id=id)
+    evento = get_object_or_404(TimelineEvent, id=event_id, family=family)
+
+    if request.method == 'POST':
+        evento.delete()
+
+    return redirect('timeline', id=id)
+
 
 @never_cache
 @login_required
@@ -882,6 +962,25 @@ def search_timeline_event(request, id):
 
     return redirect("timeline", id=family.id)
 
+def pdf_timeline(request, id):
+    family = get_object_or_404(Family, id=id)
+    eventos = TimelineEvent.objects.filter(family=family)
+
+    html_txt = render(request, 'seapac/timeline/pdf_timeline.html', {'family': family, 'events': eventos}).content.decode("utf-8")
+
+    css_path = finders.find('css/timeline_pdf.css')
+
+    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
+
+    response = HttpResponse(
+        pdf,
+        content_type='application/pdf',
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="timeline{family.nome_titular}.pdf"'
+    )
+
+    return response
 
 # --------------CRUD CALENDARIO--------------
 

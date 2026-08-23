@@ -83,10 +83,13 @@
     <div class="families-section">
         <div class="section-header">
             <h2>Famílias Cadastradas</h2>
-            <button class="btn btn-primary" onclick="redirect('{% url 'register' %}')">
-                <i class="fas fa-plus"></i>
-                Adicionar
-            </button>
+            <div class="buttons-header">
+                <button class="btn btn-primary" onclick="redirect('{% url 'register' %}')">
+                    <i class="fas fa-plus"></i>
+                    Adicionar
+                </button>
+                <button class="btn btn-primary" onclick="redirect('{% url 'import' %}')">Importar família</button>
+            </div>
         </div>
 
         <div class="families-grid">

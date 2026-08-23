@@ -50,6 +50,35 @@
             $('#subsystemFilter').select2();
         });
 
+        function confirmDelete(event, form) {
+
+            event.preventDefault()
+
+            Swal.fire({
+                    title: 'Deseja excluir o evento?',
+                    text: 'Essa ação não poderá ser desfeita.',
+                    icon: 'warning',
+
+                    showCancelButton: true,
+
+                    confirmButtonText: 'Sim, excluir',
+                    cancelButtonText: 'Cancelar',
+
+                    reverseButtons: true,
+                    focusCancel: true,
+                    customClass: {
+                        confirmButton: 'confirm-Green'
+                    }
+
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+
+                });
+        }
+
     </script>
     {% endblock %}
 </body>

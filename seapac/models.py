@@ -34,8 +34,8 @@ LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
 
 
 class Family(models.Model):
-    nome_titular = models.CharField(max_length=30)
-    data_inicio = models.PositiveSmallIntegerField()
+    nome_titular = models.CharField(max_length=100)
+    data_inicio = models.PositiveSmallIntegerField(null=True)
     contato = models.CharField(max_length=30)
     municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE)
     projetos = models.ManyToManyField("Project", blank=True)

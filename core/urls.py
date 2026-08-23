@@ -20,7 +20,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from seapac.views import *
+from seapac.views import * 
 from usuarios.views import *
 
 urlpatterns = [
@@ -43,6 +43,7 @@ urlpatterns = [
     ),
     # familias
     path("cadastrar/", register, name="register"),
+    path("importar/", ImportarDadosExcel.as_view(), name="import"),
     path("<str:id>/editar-familia/", edit_family, name="edit_family"),
     path("lista-familias/", list_families, name="list_families"),
     path("<str:id>/visualizar-familia/", detail_family, name="detail_family"),
@@ -63,12 +64,14 @@ urlpatterns = [
     # timeline
     path("<str:id>/timeline/", timeline, name="timeline"),
     path("<str:id>/timeline/novo/", add_timeline, name="add_timeline"),
+    path("<str:id>/timeline/excluir/<int:event_id>", delete_timeline, name="delete_timeline"),
     path(
         "<str:id>/timeline/editar/<str:event_id>/", edit_timeline, name="edit_timeline"
     ),
     path(
         "<str:id>/timeline/buscar/", search_timeline_event, name="search_timeline_event"
     ),
+    path("<str:id>/timeline/gerar_pdf", pdf_timeline, name="pdf_timeline"),
     # subsistemas
     path("lista-subsistemas/", list_subsystems, name="list_subsystems"),
     path(

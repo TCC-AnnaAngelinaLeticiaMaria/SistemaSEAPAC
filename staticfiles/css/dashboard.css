@@ -372,6 +372,11 @@ body {
     color: var(--gray-900);
 }
 
+.buttons-header {
+    display: flex;
+    gap: 10px;
+}
+
 .btn {
     display: inline-flex;
     align-items: center;

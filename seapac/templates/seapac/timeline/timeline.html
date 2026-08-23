@@ -23,6 +23,7 @@
         </form>
 -->
         <a href="{% url 'add_timeline' family.id %}" class="btn btn-primary">+ Adicionar Marco Histórico</a>
+        <a href="{% url 'pdf_timeline' family.id %}" class="btn btn-primary">Gerar PDF</a>
     </div>
     {% if events %}
         <div class="sandbox" id="sandbox">
@@ -42,9 +43,20 @@
                     {% if evento.secao == 'mundo-interno' %}
 
                     <div class="timeline-event event-left">
-                        <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event-out-left">
-                            <span class="material-symbols-outlined">edit</span>
-                        </a>
+                        <div class="buttons-timeline edit-event-out-left">
+
+                            <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+
+                            <a href="{% url 'edit_timeline' family.id evento.id %}">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+
+                        </div>
 
                         <div class="evento-info">
                             <h3 class="title-section">{{ evento.get_secao_display }}</h3>
@@ -52,18 +64,36 @@
                             <p>{{ evento.descricao }}</p>
                         </div>
 
-                        <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
-                            <span class="material-symbols-outlined">edit</span>
-                        </a>
+                        <div class="buttons-timeline">
+                            <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)" class="delete-event">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+                            
+                            <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                        </div>
 
                     </div>
 
                     {% else %}
 
                     <div class="timeline-event event-right">
-                        <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event-out-right">
-                            <span class="material-symbols-outlined">edit</span>
-                        </a>
+                        <div class="buttons-timeline edit-event-out-right">
+                            <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+
+                            <a href="{% url 'edit_timeline' family.id evento.id %}">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                        </div>
 
                         <div class="evento-info">
                             <h3 class="title-section">{{ evento.get_secao_display }}</h3>
@@ -71,9 +101,18 @@
                             <p>{{ evento.descricao }}</p>
                         </div>
 
-                        <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
-                            <span class="material-symbols-outlined">edit</span>
-                        </a>
+                        <div class="buttons-timeline">
+                            <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)" class="delete-event">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+
+                            <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                        </div>
 
                     </div>
 

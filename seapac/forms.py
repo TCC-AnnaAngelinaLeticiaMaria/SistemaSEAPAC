@@ -9,6 +9,12 @@ import json
 import os
 
 #----------------------------
+# IMPORTAR PLANILHA
+# ---------------------------
+class ImportarPlanilha(forms.Form):
+    arquivo = forms.FileField()
+
+#----------------------------
 # PROJECT
 # ---------------------------
 class ProjectForm(ModelForm):

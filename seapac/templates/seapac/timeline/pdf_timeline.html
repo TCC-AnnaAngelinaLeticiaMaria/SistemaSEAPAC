@@ -1,0 +1,63 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/timeline_pdf.css' %}">
+</head>
+<body>
+    
+    {% if events %}
+        <div class="sandbox" id="sandbox">
+    
+            <div class="titles">
+                <h3>Interno</h3>
+                <h3>Externo</h3>
+            </div>
+            <div class="events">
+    
+                {% for evento in events %}
+    
+                    {% ifchanged evento.data %}
+                        <h4 class="year">{{ evento.data }}</h4>
+                    {% endifchanged %}
+    
+                    {% if evento.secao == 'mundo-interno' %}
+    
+                    <div class="timeline-event event-left">
+    
+                        <div class="evento-info">
+                            <h3 class="title-section">{{ evento.get_secao_display }}</h3>
+                            <h5>{{ evento.titulo }}</h5>
+                            <p>{{ evento.descricao }}</p>
+                        </div>
+    
+                    </div>
+    
+                    {% else %}
+    
+                    <div class="timeline-event event-right">
+    
+                        <div class="evento-info">
+                            <h3 class="title-section">{{ evento.get_secao_display }}</h3>
+                            <h5>{{ evento.titulo }}</h5>
+                            <p>{{ evento.descricao }}</p>
+                        </div>
+    
+                    </div>
+    
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="no-event">
+            <i class="fas fa-search"></i>
+            <h3>Nenhum evento registrado</h3>
+        </div>
+    {% endif %}
+    
+</body>
+</html>
