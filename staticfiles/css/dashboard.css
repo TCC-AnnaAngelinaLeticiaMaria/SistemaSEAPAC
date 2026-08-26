@@ -656,6 +656,17 @@ body {
     color: var(--gray-500);
 }
 
+
+/*  The icon for tooltip - info sign */
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
+
+
 /* Responsive Design */
 @media (max-width: 1292px) {
     .container-forms {

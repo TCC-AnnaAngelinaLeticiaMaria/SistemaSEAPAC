@@ -1,131 +1,249 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/renda.css' %}">
+{% endblock extra_head %}
 
 {% block center %}
-
 <h1 class='title'>
-    {% block title %}{{ title }}{% endblock title %} {{ family.get_nome_familia }}
+    {% block title %}{{ title }} {{ family.get_nome_familia }}{% endblock title %} 
 </h1>
 
-
-<div class="card table">
-    <h2><strong>Valores Reais</strong><small>(apenas monetário)</small></h2>
-    <div class="card-line space-between">
-        <span>Receita</span>
-        <span class="green-font">R$ {{ total_receita }}</span>
-    </div>
-    <div class="card-line space-between">
-        <span>Custo total</span>
-        <span class="red-font">R$ {{ total_custo }}</span>
-    </div>
-
-    <hr>
-
-    <div class="lucro-view">
-        <div class="card-line space-between">
-            <span>Lucro líquido</span>
-            <span>R$ {{ renda_total }}</span>
-        </div>
-    </div>
-</div>
-
-<div class="card table">
-    <h2><strong>Valores Potenciais</strong><small>(monetário + não monetário)</small></h2>
-    <div class="card-line space-between">
-        <span>Receita não monetária</span>
-        <span class="green-font">R$ {{ total_receita_potencial }}</span>
-    </div>
-    <div class="card-line space-between">
-        <span>Custo total</span>
-        <span class="red-font">R$ {{ total_custo }}</span>
-    </div>
-
-    <hr>
+<section class="flex resumo-container">
     
-    <div class="lucro-view">
-        <div class="card-line space-between">
-            <span>Lucro não monetário</span>
-            <span>R$ {{ renda_total_potencial }}</span>
+    <div class="card-renda shadow">
+        <div class="cabecalho back-green">
+            <h2><strong>Valores Reais</strong></h2>
+            <p>(apenas monetário)</p>
         </div>
-        <p class="text-muted">
-            Diferença de <strong>R$ {{ diferenca }}</strong> entre o valor real e o potencial.
-        </p>
+        <div class="card-content">
+            <div class="card-line space-between">
+                <span>Receita
+
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor recebido pelos produtos vendidos">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+
+                </span>
+                <span class="green-font bold money">R$ {{ total_receita }}</span>
+            </div>
+            <div class="card-line space-between">
+                <span>Custo total
+
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor gasto para a produção">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+
+                </span>
+                <span class="red-font bold money">R$ {{ total_custo }}</span>
+            </div>
+            <div class="divisoria"></div>
+            <div class="lucro-view">
+                <div class="card-line space-between bold">
+                    <span>Lucro líquido</span>
+                    <span  class="money">R$ {{ renda_total }}</span>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+    
+    <div class="card-renda shadow">
+        <div class="cabecalho back-green">
+            <h2><strong>Valores Potenciais</strong></h2>
+            <p>(monetário + não monetário)</p>
+        </div>
+        <div class="card-content">
+            <div class="card-line space-between">
+                <span>Receita não monetária
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor que receberia se TUDO tivesse sido VENDIDO">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+
+                </span>
+                <span class="green-font bold money">R$ {{ total_receita_potencial }}</span>
+            </div>
+            <div class="card-line space-between">
+                <span>Custo total
+
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor gasto para a produção">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </span>
+                <span class="red-font bold money">R$ {{ total_custo }}</span>
+            </div>
+            <div class="divisoria"></div>
+            <div class="lucro-view">
+                <div class="card-line space-between bold">
+                    <span>Lucro não monetário</span>
+                    <span class="money">R$ {{ renda_total_potencial }}</span>
+                </div>
+                <p class="text-muted">
+                    Diferença de <strong>R$ {{ diferenca }}</strong> entre o valor real e o potencial.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
 
 
-
-<h2 class="title">Do que foi vendido (valores monetários)</h2>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Subsistema</th>
-            <th>Produto</th>
-            <th>Quantidade</th>
-            <th>Unidade</th>
-            <th>Custo Unitário (R$)</th>
-            <th>Valor Unitário (R$)</th>
-            <th>Custo Total (R$)</th>
-            <th>Receita (R$)</th>           
-            <th>Lucro (R$)</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for p in produtos  %}
-        {% if p.qtd != 0 %}
-            {% if p.valor and p.valor != '0,00' %}
+<section class="detalhamento-producao">
+    
+    <h2 class="title">Do que foi vendido (valores monetários)</h2>
+    <table class="table shadow">
+        <thead class="cabecalho back-green">
             <tr>
-                <td>{{ p.subsistema }}</td>
-                <td>{{ p.produto }}</td>
-                <td>{{ p.qtd_vendida }}</td>
-                <td>{{ p.unidade }}</td>
-                <td>{{ p.custo }}</td>
-                <td>{{ p.valor }}</td>
-                <td>{{ p.custo_vendido }}</td>
-                <td>{{ p.receita }}</td>
-                <td><strong>{{ p.lucro }}</strong></td>
+                <th>Subsistema
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Indica o tipo de produção">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Produto
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Nome do produto">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Quantidade
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O quanto foi produzido">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Unidade
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unidade de medida">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Custo Unitário (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O custo para produzir 1 unidade definida (unidade, kg, litro ou outra)">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Valor Unitário (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor pelo qual o produto será vendido">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button></th>
+                <th>Custo Total (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor gasto ao produzir a quantidade total">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Receita (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor recebido pelos produtos vendidos">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Lucro (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Lucro do que foi vendido (receita menos custo total)">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
             </tr>
+        </thead>
+        <tbody>
+        {% for p in produtos  %}
+            {% if p.qtd != 0 %}
+                {% if p.valor and p.valor != '0,00' %}
+                <tr>
+                    <td>{{ p.subsistema }}</td>
+                    <td>{{ p.produto }}</td>
+                    <td>{{ p.qtd_vendida }}</td>
+                    <td>{{ p.unidade }}</td>
+                    <td>{{ p.custo }}</td>
+                    <td>{{ p.valor }}</td>
+                    <td>{{ p.custo_vendido }}</td>
+                    <td>{{ p.receita }}</td>
+                    <td>{{ p.lucro }}</td>
+                </tr>
+                {% endif %}
             {% endif %}
-        {% endif %}
-    {% endfor %}
-    </tbody>
-</table>
-
-
-<h2 class="title">Do que foi produzido, mas não vendido (valores não monetários)</h2>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Subsistema</th>
-            <th>Produto</th>
-            <th>Quantidade</th>
-            <th>Unidade</th>
-            <th>Custo Unitário (R$)</th>
-            <th>Valor Unitário (R$)<br><small>Não monetário</small></th>
-            <th>Custo Total (R$)</th>
-            <th>Receita (R$)<br><small>Não monetário</small></th>           
-            <th>Lucro (R$)<br>
-                <small>Não monetário</small></th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for p in produtos  %}
-        {% if p.qtd != 0 %}
-            {% if p.valor_potencial != '0,00' %}
+        {% endfor %}
+        </tbody>
+    </table>
+    
+    
+    <h2 class="title">Do que foi produzido, mas não vendido (valores não monetários)</h2>
+    <table class="table shadow">
+        <thead class="cabecalho back-green">
             <tr>
-                <td>{{ p.subsistema }}</td>
-                <td>{{ p.produto }}</td>
-                <td>{{ p.qtd_naovendida }}</td>
-                <td>{{ p.unidade }}</td>
-                <td>{{ p.custo }}</td>
-                <td>{{ p.valor_potencial }}</td>
-                <td>{{ p.custo_nao_vendido }}</td>
-                <td>{{ p.receita_potencial }}</td>
-                <td><strong>{{ p.lucro_potencial }}</strong></td>
+                <th>Subsistema
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Indica o tipo de produção">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Produto
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Nome do produto">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Quantidade
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O quanto foi produzido">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Unidade
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Unidade de medida">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Custo Unitário (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O custo para produzir 1 unidade definida (unidade, kg, litro ou outra)">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+
+                <th>Valor Unitário (R$)
+                <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor pelo qual uma unidade SERIA vendido">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>    
+                <br><small>Não monetário</small>
+                </th>
+
+                <th>Custo Total (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O valor gasto para produzir a quantidade total">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                </th>
+                <th>Receita (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Valor que SERIA recebido se tudo tivesse sido vendido">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button>
+                    <br><small>Não monetário</small>
+                </th>
+
+                <th>Lucro (R$)
+                    <button type="button" class="btn btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="O lucro que seria alcançado se tudo fosse vendido (receita não monetária menos o custo toal)">
+                        <span class="material-symbols-outlined info-symbol">info</span>
+                    </button><br>
+                    <small>Não monetário</small></th>
             </tr>
+        </thead>
+        <tbody>
+        {% for p in produtos  %}
+            {% if p.qtd != 0 %}
+                {% if p.valor_potencial != '0,00' %}
+                <tr>
+                    <td>{{ p.subsistema }}</td>
+                    <td>{{ p.produto }}</td>
+                    <td>{{ p.qtd_naovendida }}</td>
+                    <td>{{ p.unidade }}</td>
+                    <td>{{ p.custo }}</td>
+                    <td>{{ p.valor_potencial }}</td>
+                    <td>{{ p.custo_nao_vendido }}</td>
+                    <td>{{ p.receita_potencial }}</td>
+                    <td><strong>{{ p.lucro_potencial }}</strong></td>
+                </tr>
+                {% endif %}
             {% endif %}
-        {% endif %}
-    {% endfor %}
-    </tbody>
-</table>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
 
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+</script>
+{% endblock extra_js %}
