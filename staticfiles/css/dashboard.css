@@ -73,6 +73,26 @@ body {
     line-height: 1.6;
 }
 
+/* botão voltar */
+.btn-voltar-page {
+    color: var(--gray-500);
+    border: 1px solid var(--gray-500);
+    padding: 5px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    display: flex;
+    width: fit-content;
+}
+
+.btn-voltar-page:hover {
+    text-decoration: none;
+    background-color: var(--gray-500);
+    color: white;
+    transition: all 0.5s ease-in-out;
+}
+
+
 /* Sidebar */
 .sidebar {
     position: fixed;

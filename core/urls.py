@@ -28,16 +28,17 @@ urlpatterns = [
     path("", index, name="index"),
     path("dashboard/", dashboard, name="dashboard"),
     # fluxo
-    path("<str:id>/fluxo/", flow, name="flow"),
-    path("<str:id>/editar-fluxo/", edit_flow, name="edit_flow"),
+    path("<str:id>/fluxo/<int:ano>/", flow, name="flow"),
+    path("<str:id>/adicionar-fluxo/<int:ano>/", new_subsystem_to_family, name="new_subsystem_to_family"),
+    path("<str:id>/lista-fluxos/", flow_list, name="flow_list"),
     # paineis
     path(
-        "<str:family_id>/painel-subsistema/<str:subsystem_id>/",
+        "<str:family_id>/painel-subsistema/<str:subsystem_id>/<int:renda_id>/",
         subsystem_panel,
         name="subsystem_panel",
     ),
     path(
-        "<str:family_id>/editar-painel-subsistema/<str:subsystem_id>/",
+        "<str:family_id>/editar-painel-subsistema/<str:subsystem_id>/<int:renda_id>",
         edit_subsystem_panel,
         name="edit_subsystem_panel",
     ),
@@ -48,7 +49,7 @@ urlpatterns = [
     path("lista-familias/", list_families, name="list_families"),
     path("<str:id>/visualizar-familia/", detail_family, name="detail_family"),
     path("<str:id>visualizar-familia/deletar", delete_family, name="delete_family"),
-    path("<str:id>/renda_familiar/", renda_familiar, name="renda_familiar"),
+    path("<str:id>/renda_familiar/<int:ano>", renda_familiar_detail, name="renda_familiar_detail"),
     # projetos
     path("lista-projetos/", list_projects, name="list_projects"),
     path("lista-projetos/novo/", create_projects, name="create_projects"),
@@ -86,12 +87,6 @@ urlpatterns = [
         delete_subsystems,
         name="delete_subsystems",
     ),
-    # calendario
-    path("calendario-visitas/", calendar, name="calendar"),
-    path("api/events/", eventos_json),
-    path("api/events/create/", criar_evento),
-    path("api/events/delete/<int:event_id>/", deletar_evento),
-    path("api/events/confirm/<int:event_id>/", confirmar_evento),
     # usuários e recuperação de senha
     path("usuarios/", include("usuarios.urls")),
     # geração de relatórios

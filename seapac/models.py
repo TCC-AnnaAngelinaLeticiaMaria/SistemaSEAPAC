@@ -2,6 +2,7 @@ from django.db import models
 import os
 from django.conf import settings
 from PIL import Image
+from django.utils import timezone
 
 
 class Technician(models.Model):
@@ -24,11 +25,16 @@ class Technician(models.Model):
 
 class Municipality(models.Model):
     nome = models.CharField(max_length=30)
-    comunidade = models.CharField(max_length=100, null=True)
 
     def __str__(self):
         return self.nome
 
+class Community(models.Model):
+    nome_comunidade = models.CharField(max_length=100)
+    municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+            return self.nome_comunidade
 
 LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
 
@@ -38,30 +44,11 @@ class Family(models.Model):
     data_inicio = models.PositiveSmallIntegerField(null=True)
     contato = models.CharField(max_length=30)
     municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE)
+    comunidade = models.ForeignKey(Community, on_delete=models.CASCADE,  null=True)
     projetos = models.ManyToManyField("Project", blank=True)
-    subsistemas = models.ManyToManyField(
-        "Subsystem", through="FamilySubsystem", blank=True
-    )
-    renda = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-
+    
     def __str__(self):
         return self.nome_titular
-
-    def get_pontuacao(self):
-        pontuacao = self.subsistemas.count() * 3
-        if pontuacao == 6:
-            return 0
-        else:
-            return pontuacao - 6
-
-    def get_nivel(self):
-        pontos = self.get_pontuacao()
-        if pontos <= 30:
-            return dict(LEVEL_CHOICES).get(1)
-        elif pontos <= 60:
-            return dict(LEVEL_CHOICES).get(2)
-        else:
-            return dict(LEVEL_CHOICES).get(3)
 
     def get_nome_familia(self):
         try:
@@ -73,21 +60,35 @@ class Family(models.Model):
     def get_subsistemas_list(self):
         return ", ".join(
             f"{fs.subsystem.nome_subsistema} ({len(fs.produtos_saida)} produtos)"
-            for fs in FamilySubsystem.objects.filter(family=self)
+            for fs in FamilySubsystem.objects.filter(family_renda__family=self)
         )
 
-    def add_subsystem_to_family(family, subsystem):
+    def get_visitas_confirmadas(self):
+        return self.eventos.filter(confirmado=True).count()
+
+def currentyear():
+        return timezone.now().year
+
+class FamilyRenda(models.Model):
+    family = models.ForeignKey("Family", on_delete=models.CASCADE)
+    ano = models.PositiveSmallIntegerField(default=currentyear, null=False)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["family", "ano"],
+                name="unique_family_renda_ano",
+            )
+        ]
+
+    def add_subsystem_to_family(self, subsystem):
         family_subsystem, created = FamilySubsystem.objects.get_or_create(
-            family=family,
+            family_renda=self,
             subsystem=subsystem,
         )
         if created:
             family_subsystem.produtos_saida = subsystem.produtos_base
             family_subsystem.save()
         return family_subsystem
-
-    def get_visitas_confirmadas(self):
-        return self.eventos.filter(confirmado=True).count()
 
     def calcular_renda(self):
         dados_produtos = []
@@ -98,7 +99,7 @@ class Family(models.Model):
         total_receita_potencial = 0
         renda_total_potencial = 0
 
-        for fs in FamilySubsystem.objects.filter(family=self):
+        for fs in FamilySubsystem.objects.filter(family_renda=self):
             produtos_dict = {}
 
             for produto in fs.produtos_saida:
@@ -109,7 +110,7 @@ class Family(models.Model):
                     produtos_dict[nome] = {
                         "nome": nome,
                         "valor_potencial": 0,
-                        "valor_unitario": 0,
+                        "receita_total": 0,
                         "custo_unitario": 0,
                         "qtd_total": 0,
                         "qtd_vendida": 0,
@@ -132,18 +133,18 @@ class Family(models.Model):
                     produtos_dict[nome]["custo_total"] += qtd * custo
 
                     if valor > 0:
-                        produtos_dict[nome]["valor_unitario"] = valor
+                        produtos_dict[nome]["receita_total"] += qtd * valor
                         produtos_dict[nome]["qtd_vendida"] += qtd
 
             for nome, dados in produtos_dict.items():
                 qtd_total = dados["qtd_total"]
                 qtd_vendida = dados["qtd_vendida"]
-                valor_unitario = dados["valor_unitario"]
+                receita_real = dados["receita_total"]
                 valor_potencial = dados["valor_potencial"]
                 custo_unitario = dados["custo_unitario"]
                 custo_total = dados["custo_total"]
 
-                receita_real = valor_unitario * qtd_vendida
+                valor_unitario = receita_real / qtd_vendida if qtd_vendida else 0
                 lucro_real = receita_real - custo_total
 
                 receita_potencial = valor_potencial * qtd_total
@@ -179,6 +180,9 @@ class Family(models.Model):
             "total_receita_potencial": total_receita_potencial,
             "renda_total_potencial": renda_total_potencial,
         }
+    
+    def __str__(self):
+        return f'{self.family.get_nome_familia()} - {self.ano}'
 
 
 class Subsystem(models.Model):
@@ -227,15 +231,15 @@ class Subsystem(models.Model):
 
 
 class FamilySubsystem(models.Model):
-    family = models.ForeignKey("Family", on_delete=models.CASCADE)
     subsystem = models.ForeignKey("Subsystem", on_delete=models.CASCADE)
+    family_renda = models.ForeignKey("FamilyRenda", on_delete=models.CASCADE, null=True)
     produtos_saida = models.JSONField(default=list, blank=True)
 
     class Meta:
-        unique_together = ("family", "subsystem")
+        unique_together = ("family_renda", "subsystem")
 
     def __str__(self):
-        return f"{self.family.get_nome_familia()} - {self.subsystem.nome_subsistema}"
+        return f"{self.family_renda.family.get_nome_familia()} - {self.subsystem.nome_subsistema}"
 
 
 class Project(models.Model):

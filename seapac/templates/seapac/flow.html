@@ -2,12 +2,17 @@
 {% load static %}
 {% block center %}
 
+<a href="{% url 'flow_list' family.id %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
 <div class="flow-header">
     <div class="flow-header-main">
-        <h1 class='title'>{% block title %}{{ title }}{% endblock title %} da {{ family.get_nome_familia }}</h1>
+        <h1 class='title'>{% block title %}{{ title }}{% endblock title %} da {{ family.get_nome_familia }} - {{ ano }}</h1>
     </div>
     <div>
-        <button class="btn btn-primary btn-timeline" onclick="redirect('{% url 'edit_flow' id %}')">
+        <button class="btn btn-primary btn-timeline" onclick="redirect('{% url 'new_subsystem_to_family' family.id ano %}')">
             <i class="fas fa-edit"></i>
             Adicionar Subsistema
         </button>

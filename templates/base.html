@@ -47,6 +47,10 @@
         });
 
         $(document).ready(function() {
+            $('#comunidade').select2();
+        });
+
+        $(document).ready(function() {
             $('#subsystemFilter').select2();
         });
 
@@ -77,6 +81,12 @@
                     }
 
                 });
+        }
+
+        function adicionarFluxo(btn) {
+            const ano = document.getElementById('year-select').value;
+            const url = btn.dataset.urlTemplate.replace('9999', ano);
+            window.location.href = url
         }
 
     </script>

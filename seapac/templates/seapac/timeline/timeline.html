@@ -9,6 +9,11 @@
 
 {% block center %}
 
+<a href="{% url 'dashboard' %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
 <div class="flow-header">
     <div class="flow-header-main">
         <h1 class='title'>{% block title %}{{ title }}{% endblock title %}</h1>

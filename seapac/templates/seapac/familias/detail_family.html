@@ -2,6 +2,11 @@
 
 {% block center %}
 
+<a href="{% url 'dashboard' %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
 <h1 class='title'>{% block title %}{{ title }}{% endblock title %}{{family.get_nome_familia}}</h1>
 
 <div class="container-fluid">
@@ -22,9 +27,6 @@
                             <i class="fas fa-trash-alt"></i> Deletar
                         </a>
                     {% endif %}
-                    <a href="{% url 'dashboard' %}" class="btn btn-primary" id="addProjectBtn">
-                         <i class="	fas fa-step-backward"></i> Voltar
-                    </a>
                     <a href="{% url 'relatorio_family' family.id %}" 
                         class="btn btn-primary" 
                         target="_blank">

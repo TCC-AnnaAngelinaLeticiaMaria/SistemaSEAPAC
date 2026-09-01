@@ -39,23 +39,15 @@
     <div class="family-actions">
         <button class="btn btn-outline btn-sm act-btn" onclick="redirect('{% url 'detail_family' family.id %}')">
             <i class="fas fa-eye"></i>
-            <p>Visualizar</p> 
-        </button>
-        <button class="btn btn-outline btn-sm act-btn" onclick="window.location.href='{% url 'calendar' %}?q={{ family.nome_titular }}'">
-            <i class="fas fa-calendar-plus"></i>
-            <p>Agendar Visita</p> 
-        </button>
-        <button class="btn btn-outline btn-sm act-btn" onclick="redirect('{% url 'flow' family.id %}')">
-            <i class="fa-solid fa-shuffle"></i>
-            <p>Fluxograma</p> 
+            <p>Visualizar perfil</p> 
         </button>
         <button class="btn btn-outline btn-sm act-btn" onclick="redirect('{% url 'timeline' family.id %}')">
             <i class="fa-solid fa-timeline"></i>
             <p>Timeline</p> 
         </button>
-        <button class="btn btn-outline btn-sm act-btn" onclick="redirect('{% url 'renda_familiar' family.id %}')">
-            <i class="fas fa-dollar-sign"></i>
-            <p>Renda</p> 
+        <button class="btn btn-outline btn-sm act-btn" onclick="redirect('{% url 'flow_list' family.id %}')">
+            <i class="fa-solid fa-shuffle"></i>
+            <p>Fluxogramas</p> 
         </button>
     </div>
 </div>

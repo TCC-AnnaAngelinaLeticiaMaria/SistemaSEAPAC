@@ -9,6 +9,11 @@
 </head>
 <body>
     
+    <div class="flow-header-main">
+        <h1 class='title'>{% block title %}Linha do tempo{% endblock title %}</h1>
+        <h2 class="name-family">{{ family.get_nome_familia }}</h2>
+    </div>
+
     {% if events %}
         <div class="sandbox" id="sandbox">
     
@@ -18,37 +23,41 @@
             </div>
             <div class="events">
     
-                {% for evento in events %}
-    
-                    {% ifchanged evento.data %}
-                        <h4 class="year">{{ evento.data }}</h4>
-                    {% endifchanged %}
-    
-                    {% if evento.secao == 'mundo-interno' %}
-    
-                    <div class="timeline-event event-left">
-    
-                        <div class="evento-info">
-                            <h3 class="title-section">{{ evento.get_secao_display }}</h3>
-                            <h5>{{ evento.titulo }}</h5>
-                            <p>{{ evento.descricao }}</p>
-                        </div>
-    
+                {% regroup events by data as anos %}
+
+                {% for ano in anos %}
+
+                <div class="timeline-years">
+                    <h4 class="year">{{ ano.grouper }}</h4>
+                    
+                    <div class="year-events">
+                        {% for evento in ano.list %}
+                            {% if evento.secao == 'mundo-interno' %}
+            
+                            <div class="timeline-event event-left">
+            
+                                <div class="evento-info">
+                                    <h3 class="title-section">{{ evento.get_secao_display }}</h3>
+                                    <h5>{{ evento.titulo }}</h5>
+                                    <p>{{ evento.descricao }}</p>
+                                </div>
+            
+                            </div>
+            
+                            {% else %}
+            
+                            <div class="timeline-event event-right">
+            
+                                <div class="evento-info">
+                                    <h3 class="title-section">{{ evento.get_secao_display }}</h3>
+                                    <h5>{{ evento.titulo }}</h5>
+                                    <p>{{ evento.descricao }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
                     </div>
-    
-                    {% else %}
-    
-                    <div class="timeline-event event-right">
-    
-                        <div class="evento-info">
-                            <h3 class="title-section">{{ evento.get_secao_display }}</h3>
-                            <h5>{{ evento.titulo }}</h5>
-                            <p>{{ evento.descricao }}</p>
-                        </div>
-    
-                    </div>
-    
-                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
         </div>

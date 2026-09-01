@@ -162,6 +162,7 @@ class FamilyForm(ModelForm):
                 attrs={"class": "form-control", "placeholder": "Telefone ou e-mail"}
             ),
             "municipio": forms.Select(attrs={"class": "form-control", "id": "municipio"}),
+            "comunidade": forms.Select(attrs={"class": "form-control", "id": "comunidade"}),
             "projetos": forms.SelectMultiple(
                 attrs={"class": "form-control", "size": 14}
             ),

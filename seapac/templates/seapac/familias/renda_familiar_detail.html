@@ -2,8 +2,13 @@
 
 {% block center %}
 
+<a href="{% url 'flow_list' family.id %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
 <h1 class='title'>
-    {% block title %}{{ title }}{% endblock title %} {{ family.get_nome_familia }}
+    {% block title %}{{ title }}{% endblock title %} {{ family.get_nome_familia }} - {{ ano }}
 </h1>
 
 <table class="table table-striped">
