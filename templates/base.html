@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -41,6 +43,54 @@
             }
         });
         }
+
+        $(document).ready(function() {
+            $('#municipio').select2();
+        });
+
+        $(document).ready(function() {
+            $('#comunidade').select2();
+        });
+
+        $(document).ready(function() {
+            $('#subsystemFilter').select2();
+        });
+
+        function confirmDelete(event, form) {
+
+            event.preventDefault()
+
+            Swal.fire({
+                    title: 'Deseja excluir o evento?',
+                    text: 'Essa ação não poderá ser desfeita.',
+                    icon: 'warning',
+
+                    showCancelButton: true,
+
+                    confirmButtonText: 'Sim, excluir',
+                    cancelButtonText: 'Cancelar',
+
+                    reverseButtons: true,
+                    focusCancel: true,
+                    customClass: {
+                        confirmButton: 'confirm-Green'
+                    }
+
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+
+                });
+        }
+
+        function adicionarFluxo(btn) {
+            const ano = document.getElementById('year-select').value;
+            const url = btn.dataset.urlTemplate.replace('9999', ano);
+            window.location.href = url
+        }
+
     </script>
     {% endblock %}
 </body>

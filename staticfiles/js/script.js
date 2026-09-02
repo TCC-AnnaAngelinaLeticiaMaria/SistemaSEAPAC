@@ -5,7 +5,7 @@ function redirect(url) {
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.stat-value').forEach(element => {
     const target = parseInt(element.textContent, 10);
-    const duration = 2000;
+    const duration = 100;
     const increment = target / (duration / 16);
     let current = 0;
 

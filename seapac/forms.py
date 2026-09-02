@@ -3,12 +3,18 @@ from django.forms import ModelForm, formset_factory, BaseFormSet
 from .models import Family, Project, Technician, Subsystem, TimelineEvent
 from .validators import validate
 from PIL import Image
+from datetime import date
 import re
 import json
 import os
 
-
+#----------------------------
+# IMPORTAR PLANILHA
 # ---------------------------
+class ImportarPlanilha(forms.Form):
+    arquivo = forms.FileField()
+
+#----------------------------
 # PROJECT
 # ---------------------------
 class ProjectForm(ModelForm):
@@ -140,7 +146,7 @@ class FamilyForm(ModelForm):
         exclude = ["terra", "subsistemas"]
         labels = {
             "nome_titular": "Nome do Titular",
-            "data_inicio": "Data de Início",
+            "data_inicio": "Ano de Início",
             "contato": "Contato",
             "municipio": "Município",
             "projetos": "Projetos",
@@ -149,13 +155,14 @@ class FamilyForm(ModelForm):
             "nome_titular": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "Nome do titular"}
             ),
-            "data_inicio": forms.DateInput(
-                attrs={"class": "form-control", "type": "date"}
+            "data_inicio": forms.NumberInput(
+                attrs={"class": "form-control", "type": "number", "min": "1993", "max": date.today().year, "placeholder": "Ano de início"}
             ),
             "contato": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "Telefone ou e-mail"}
             ),
-            "municipio": forms.Select(attrs={"class": "form-control"}),
+            "municipio": forms.Select(attrs={"class": "form-control", "id": "municipio"}),
+            "comunidade": forms.Select(attrs={"class": "form-control", "id": "comunidade"}),
             "projetos": forms.SelectMultiple(
                 attrs={"class": "form-control", "size": 14}
             ),
@@ -408,9 +415,9 @@ class TimelineEventForm(ModelForm):
         }
         widgets = {
             "titulo": forms.TextInput(attrs={"class": "form-control"}),
-            "data": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "data": forms.NumberInput(attrs={"class": "form-control", "type": "number", "min": "1993", "max": date.today().year, "placeholder": "Ano de início"}),
             "descricao": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
-            "secao": forms.TextInput(attrs={"class": "form-control"}),
+            "secao": forms.Select(attrs={"class": "form-control"}),
         }
 
 
@@ -431,7 +438,7 @@ class TimelineEventEditForm(forms.ModelForm):
                     "placeholder": "Título do evento",
                 }
             ),
-            "secao": forms.TextInput(
+            "secao": forms.Select(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Seção do evento",
@@ -445,10 +452,13 @@ class TimelineEventEditForm(forms.ModelForm):
                     "style": "resize: vertical;",
                 }
             ),
-            "data": forms.DateInput(
+            "data": forms.NumberInput(
                 attrs={
                     "class": "form-control",
-                    "type": "date",
+                    "type": "number",
+                    "min": "1993",
+                    "max": date.today().year,
+                    "placeholder": "Ano de início"
                 }
             ),
         }

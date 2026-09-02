@@ -8,6 +8,7 @@ from .models import (
     Project,
     TimelineEvent,
     Evento,
+    FamilyRenda,
 )
 
 
@@ -33,6 +34,12 @@ class TechnicianInline(admin.TabularInline):
     verbose_name = "Técnico no Projeto"
     verbose_name_plural = "Técnicos no Projeto"
 
+@admin.register(FamilyRenda)
+class FamilyRendaAdmin(admin.ModelAdmin):
+    list_display = ("family", "ano")
+    list_filter = ("ano",)
+    search_fields = ("family__nome_titular",)
+    inlines = [FamilySubsystemInline]
 
 @admin.register(Technician)
 class TechnicianAdmin(admin.ModelAdmin):
@@ -77,12 +84,9 @@ class FamilyAdmin(admin.ModelAdmin):
         "nome_titular",
         "municipio",
         "get_projetos",
-        "get_nivel",
-        "get_pontuacao",
     )
     list_filter = ("municipio", "projetos")
     search_fields = ("nome_titular", "municipio__nome")
-    inlines = [FamilySubsystemInline]
     list_select_related = ("municipio",)
     ordering = ["nome_titular"]
     list_per_page = 10
@@ -108,9 +112,9 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(FamilySubsystem)
 class FamilySubsystemAdmin(admin.ModelAdmin):
-    list_display = ("family", "subsystem", "produtos_saida_count")
-    search_fields = ("family__nome_titular", "subsystem__nome_subsistema")
-    list_select_related = ("family", "subsystem")
+    list_display = ("produtos_saida_count", "family_renda")
+    search_fields = ("family_renda__family__nome_titular", "subsystem__nome_subsistema")
+    list_select_related = ("family_renda__family", "subsystem")
 
     def produtos_saida_count(self, obj):
         return len(obj.produtos_saida or [])
@@ -123,7 +127,6 @@ class TimelineEventAdmin(admin.ModelAdmin):
     list_display = ("titulo", "family", "data", "secao")
     list_filter = ("data",)
     search_fields = ("titulo", "descricao", "family__nome_titular")
-    date_hierarchy = "data"
     list_select_related = ("family",)
 
 
@@ -132,5 +135,4 @@ class EventoAdmin(admin.ModelAdmin):
     list_display = ("titulo", "familia", "data", "confirmado")
     list_filter = ("confirmado",)
     search_fields = ("titulo", "familia__nome_titular")
-    date_hierarchy = "data"
     list_select_related = ("familia",)

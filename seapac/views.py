@@ -8,6 +8,9 @@ from .models import (
     TimelineEvent,
     Municipality,
     Evento,
+    FamilyRenda,
+    Community,
+    currentyear,
 )
 from .forms import (
     FamilyForm,
@@ -22,6 +25,7 @@ from .forms import (
     TechnicianEditForm,
     SubsystemEditForm,
     TimelineEventEditForm,
+    ImportarPlanilha,
 )
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -30,11 +34,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 from .reports.pdf import gerar_relatorio_family
 from django.core.paginator import Paginator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.staticfiles import finders
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.forms import formset_factory
 from django.http import FileResponse
 from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse
+from django.views import View
+from weasyprint import HTML, CSS
+import pandas as pd
+import unicodedata
+import os
 
 import json
 
@@ -50,34 +62,25 @@ def dashboard(request):
     families = Family.objects.all()
     if query:
         families = families.filter(nome_titular__icontains=query)
-    if level:
-        families = [
-            f
-            for f in families
-            if str(f.get_nivel()) == str(dict(LEVEL_CHOICES).get(int(level)))
-        ]
+    
     total_municipios = (
         Municipality.objects.filter(family__isnull=False).distinct().count()
     )
     total_families = Family.objects.count()
     total_tecnicos = Technician.objects.count()
-    total_avancado = len(
-        [f for f in Family.objects.all() if f.get_nivel() == "Avancado"]
-    )
-    total_intermediario = len(
-        [f for f in Family.objects.all() if f.get_nivel() == "Intermediario"]
-    )
-    total_inicial = len([f for f in Family.objects.all() if f.get_nivel() == "Inicial"])
+#    total_avancado = len(
+#        [f for f in Family.objects.all() if f.get_nivel() == "Avancado"]
+#    )
+#    total_intermediario = len(
+#        [f for f in Family.objects.all() if f.get_nivel() == "Intermediario"]
+#    )
+#    total_inicial = len([f for f in Family.objects.all() if f.get_nivel() == "Inicial"])
     total_visitas = Evento.objects.count()
 
     context = {
         "families": families,
         "total_families": total_families,
-        "total_avancado": total_avancado,
-        "total_intermediario": total_intermediario,
-        "total_inicial": total_inicial,
         "title": "Página Inicial - Dashboard",
-        "nivel_selecionado": level,
         "query": query,
         "total_municipios": total_municipios,
         "total_visitas": total_visitas,
@@ -87,6 +90,72 @@ def dashboard(request):
 
 
 # --------------CRUD FAMILIAS (COMPLETO)--------------
+
+def normalizarColunas(coluna_nome):
+        coluna_nome = str(coluna_nome).strip().lower()
+
+        coluna_nome = unicodedata.normalize('NFKD', coluna_nome)
+        coluna_nome = ''.join(caractere for caractere in coluna_nome if not unicodedata.combining(caractere))
+
+        return ' '.join(coluna_nome.split())
+
+def verificarCampos(dataFrame, campos):
+    colunas = {}
+
+    for coluna in dataFrame.columns:
+        colunas[normalizarColunas(coluna)] = coluna
+
+    for campo in campos:
+        campo = normalizarColunas(campo)
+        if campo in colunas:
+            return colunas[campo]
+
+    return None
+    
+
+class ImportarDadosExcel(View, LoginRequiredMixin):
+
+    def get(self, request):
+        familia = Family.objects.all()
+        form =  ImportarPlanilha()
+        return render(request, "seapac/familias/importardados.html", {'form': form, 'familia': familia})
+
+    def post(self, request):
+
+        form = ImportarPlanilha(request.POST, request.FILES)
+
+        if form.is_valid():
+            arq = request.FILES['arquivo']
+            dataFrame = pd.read_excel(arq)
+
+            campo_nome = verificarCampos(dataFrame, ['Nome Completo', 'Nome', 'Nome do Titular'])
+
+            campo_contato = verificarCampos(dataFrame, ['Telefone', 'Celular', 'Contato'])
+
+            campo_municipio = verificarCampos(dataFrame, ['Município', 'Municipio'])
+
+            for _, row in dataFrame.iterrows():
+                municipio, created1 = Municipality.objects.get_or_create(
+                    nome=row[campo_municipio]
+                )
+
+                comunidade, created2 = Community.objects.get_or_create(
+                    nome_comunidade=row['Comunidade'],
+                    defaults={'municipio': municipio}
+                )
+
+                familia, created3 = Family.objects.get_or_create(
+                    nome_titular= row[campo_nome],
+                    municipio= municipio, 
+                    defaults={
+                        'contato': row[campo_contato],
+                        'comunidade': comunidade,
+                    }
+                )
+            return redirect('dashboard')
+        return render(request, "seapac/familias/importardados.html", {'form': form})
+
+
 @never_cache
 @login_required
 def register(request):
@@ -95,7 +164,7 @@ def register(request):
         if form.is_valid():
             family = form.save(commit=False)
             family.save()
-            return redirect("edit_flow", id=family.id)
+            return redirect("flow_list", id=family.id)
     else:
         form = FamilyForm()
     return render(
@@ -133,7 +202,7 @@ def edit_family(request, id):
 @never_cache
 @login_required
 def list_families(request):
-    level = request.GET.get("nivel")
+    # level = request.GET.get("nivel")
     query = request.GET.get("q")
     subsystem_name = request.GET.get("subsystem")
 
@@ -144,31 +213,29 @@ def list_families(request):
 
     if subsystem_name:
         families = families.filter(
-            subsistemas__nome_subsistema=subsystem_name
+            familyrenda__familysubsystem__subsystem__nome_subsistema=subsystem_name
         ).distinct()
 
-    if level:
-        try:
-            level_label = dict(LEVEL_CHOICES).get(int(level))
-            families = [f for f in families if f.get_nivel() == level_label]
-        except (ValueError, TypeError):
-            pass
 
     paginator = Paginator(families, 4)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
+    page_range = paginator.get_elided_page_range(number=page_obj.number, on_each_side=1, on_ends=2)
+
     subsystems = Subsystem.objects.all()
 
     context = {
         "title": "Lista de Famílias",
-        "nivel_selecionado": level,
+    #    "nivel_selecionado": level,
         "query": query,
         "page_obj": page_obj,
         "families": page_obj,
         "subsystems": subsystems,
         "subsystem_selected": subsystem_name,
         "objeto": "familias",
+        "families_list": families,
+        'page_range': page_range,
     }
     return render(request, "seapac/familias/list_families.html", context)
 
@@ -189,12 +256,14 @@ def delete_family(request, id):
 
 @never_cache
 @login_required
-def renda_familiar(request, id):
+def renda_familiar_detail(request, id, ano):
     family = get_object_or_404(Family, id=id)
-    resultado = family.calcular_renda()
+    renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    resultado = renda.calcular_renda()
 
     context = {
         "family": family,
+        "ano": ano,
         "produtos": resultado["produtos"],
         "total_receita": resultado["total_receita"],
         "total_custo": resultado["total_custo"],
@@ -204,9 +273,8 @@ def renda_familiar(request, id):
         "title": f"Renda da ",
         "diferenca": resultado["diferenca"],
     }
-    return render(request, "seapac/familias/renda_familiar.html", context)
-
-
+    return render(request, "seapac/familias/renda_familiar_detail.html", context)
+    
 # --------------CRUD PROJETOS (COMPLETO)------------------
 @never_cache
 @login_required
@@ -452,9 +520,10 @@ def delete_subsystems(request, id):
 # --------------CRUD FLUXO+SUBSISTEMAS--------------
 @never_cache
 @login_required
-def flow(request, id):
+def flow(request, id, ano):
     family = get_object_or_404(Family, id=id)
-    family_subsystems = FamilySubsystem.objects.filter(family=family).select_related(
+    renda_ano = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    family_subsystems = FamilySubsystem.objects.filter(family_renda=renda_ano).select_related(
         "subsystem"
     )
     style_mode = request.GET.get("style", "default")
@@ -526,7 +595,7 @@ def flow(request, id):
         host = request.get_host()
         if ":" not in host:
             host = f"{host}:82"
-        url = f"{request.scheme}://{host}{reverse('subsystem_panel', args=[family.id, subsystem_id])}"
+        url = f"{request.scheme}://{host}{reverse('subsystem_panel', args=[family.id, subsystem_id, renda_ano.id])}"
         click_lines.append(
             f'click {nome_subsistema} href "{url}" "Abrir painel de {nome_subsistema}"'
         )
@@ -611,39 +680,27 @@ def flow(request, id):
         "style_mode": style_mode,
         "title": "Fluxo",
         "conteudo_mermaid": conteudo_mermaid,
+        'ano': ano
     }
     return render(request, "seapac/flow.html", context)
 
-
 @never_cache
 @login_required
-def edit_flow(request, id):
+def flow_list(request, id):
+    current_year = currentyear()
+
     family = get_object_or_404(Family, id=id)
-    subsystems = Subsystem.objects.all()
-    selected_ids = list(family.subsistemas.values_list("id", flat=True))
-    if request.method == "POST":
-        selected = request.POST.getlist("subsistemas")
-        family.subsistemas.set(selected)
-        family.save()
-        return redirect("dashboard")
-    return render(
-        request,
-        "seapac/formflow.html",
-        {
-            "family": family,
-            "subsystems": subsystems,
-            "selected_ids": selected_ids,
-            "title": "Fluxo",
-        },
-    )
-
+    rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
+    
+    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'anos': range(1993, current_year+1), 'title': 'Fuxogramas da'})
 
 @never_cache
 @login_required
-def subsystem_panel(request, family_id, subsystem_id):
+def subsystem_panel(request, family_id, subsystem_id, renda_id):
     family = get_object_or_404(Family, id=family_id)
+    family_renda = get_object_or_404(FamilyRenda, family=family, id=renda_id)
     family_subsystem = get_object_or_404(
-        FamilySubsystem, family=family, subsystem_id=subsystem_id
+        FamilySubsystem, subsystem_id=subsystem_id, family_renda=family_renda
     )
 
     for produto in family_subsystem.produtos_saida:
@@ -668,19 +725,59 @@ def subsystem_panel(request, family_id, subsystem_id):
             "family_subsystem": family_subsystem,
             "title": "Painel do Subsistema",
             "type": "readonly",
+            "renda_ano": family_renda
         },
     )
 
+@never_cache
+@login_required
+def new_subsystem_to_family(request, id, ano):
+    current_year = currentyear()
+
+    if not (1993 <= ano <= current_year):
+        return HttpResponseBadRequest("Ano inválido")
+
+    family = get_object_or_404(Family, id=id)
+
+    renda_ano, criada = FamilyRenda.objects.get_or_create(
+        family=family,
+        ano=ano
+    )
+    if request.method == 'POST':
+        subsystem_choice = request.POST.getlist('subsistemas')
+
+        for subsystem_id in subsystem_choice:
+            subsystem = get_object_or_404(Subsystem, id=subsystem_id)
+            renda_ano.add_subsystem_to_family(subsystem)   
+
+        return redirect('flow_list', id=family.id)
+
+    subsys_vinculados_ids = FamilySubsystem.objects.filter(
+        family_renda = renda_ano
+    ).values_list('subsystem_id', flat=True)
+
+    subsystems = Subsystem.objects.all()
+    
+    return render(request, 'seapac/formflow.html', {
+        'family': family,
+        'ano': ano,
+        'renda_ano': renda_ano,
+        'subsystems': subsystems,
+        'selected_ids': list(subsys_vinculados_ids),
+    })
 
 @never_cache
 @login_required
-def edit_subsystem_panel(request, family_id, subsystem_id):
+def edit_subsystem_panel(request, family_id, subsystem_id, renda_id):
     family = get_object_or_404(Family, id=family_id)
+    family_renda = get_object_or_404(FamilyRenda, family=family, id=renda_id)
     family_subsystem = get_object_or_404(
-        FamilySubsystem, family=family, subsystem_id=subsystem_id
+        FamilySubsystem, subsystem_id=subsystem_id, family_renda=family_renda
     )
 
-    subsystems_destino = family.subsistemas.all()
+    subsystems_destino = Subsystem.objects.filter(
+    familysubsystem__family_renda=family_renda).distinct()
+
     destino_choices = [
         (s.nome_subsistema, s.nome_subsistema) for s in subsystems_destino
     ]
@@ -733,6 +830,7 @@ def edit_subsystem_panel(request, family_id, subsystem_id):
                 "subsystem_panel",
                 family_id=family.id,
                 subsystem_id=family_subsystem.subsystem.id,
+                renda_id=renda_id,
             )
 
     else:
@@ -769,6 +867,7 @@ def edit_subsystem_panel(request, family_id, subsystem_id):
             "title": "Editar Painel do Subsistema",
             "type": "edit",
             "formset": formset,
+            "renda_ano": family_renda
         },
     )
 
@@ -780,27 +879,28 @@ def edit_subsystem_panel(request, family_id, subsystem_id):
 @login_required
 def timeline(request, id):
     family = get_object_or_404(Family, id=id)
-    timeline_events = family.timeline_events.all().order_by("data")
+    timeline_events = family.timeline_events.all().order_by("data", "id")
 
-    secoes = {}
-    for evento in timeline_events:
-        if evento.secao not in secoes:
-            secoes[evento.secao] = []
-        secoes[evento.secao].append(evento)
+#    secoes = {}
+#    for evento in timeline_events:
+#        if evento.secao not in secoes:
+#            secoes[evento.secao] = []
+#        secoes[evento.secao].append(evento)
 
-    conteudo_mermaid = "timeline\n"
-    for secao, eventos in secoes.items():
-        conteudo_mermaid += f"    section {secao}\n"
-        for evento in eventos:
-            conteudo_mermaid += (
-                f"        {evento.data} : {evento.titulo} - {evento.descricao}\n"
-            )
+#    conteudo_mermaid = "timeline\n"
+#    for secao, eventos in secoes.items():
+#        conteudo_mermaid += f"    section {secao}\n"
+#        for evento in eventos:
+#            conteudo_mermaid += (
+#                f"        {evento.data} : {evento.titulo} - {evento.descricao}\n"
+#            )
 
     context = {
         "id": id,
         "family": family,
+        "events": timeline_events,
         "title": "Linha do Tempo",
-        "conteudo_mermaid": conteudo_mermaid,
+#        "conteudo_mermaid": conteudo_mermaid,
     }
     return render(request, "seapac/timeline/timeline.html", context)
 
@@ -809,6 +909,7 @@ def timeline(request, id):
 @login_required
 def add_timeline(request, id):
     family = get_object_or_404(Family, id=id)
+    timeline_events = family.timeline_events.all().order_by("data")
 
     if request.method == "POST":
         form = TimelineEventForm(request.POST)
@@ -826,13 +927,24 @@ def add_timeline(request, id):
         {"form": form, "title": "Adicionar Evento à Timeline", "family": family},
     )
 
+@never_cache
+@login_required
+def delete_timeline(request, id, event_id):
+    family = get_object_or_404(Family, id=id)
+    evento = get_object_or_404(TimelineEvent, id=event_id, family=family)
+
+    if request.method == 'POST':
+        evento.delete()
+
+    return redirect('timeline', id=id)
+
 
 @never_cache
 @login_required
 def edit_timeline(request, id, event_id):
     family = get_object_or_404(Family, id=id)
     event = get_object_or_404(TimelineEvent, id=event_id, family=family)
-    timeline_events = family.timeline_events.all().order_by("-data")
+    timeline_events = family.timeline_events.all().order_by("data")
 
     if request.method == "POST":
         form = TimelineEventEditForm(request.POST, instance=event)
@@ -876,106 +988,7 @@ def search_timeline_event(request, id):
     return redirect("timeline", id=family.id)
 
 
-# --------------CRUD CALENDARIO--------------
-
-
-@never_cache
-@login_required
-def calendar(request):
-    level = request.GET.get("nivel")
-    query = request.GET.get("q")
-    families = Family.objects.all()
-    if level:
-        families = [
-            f
-            for f in families
-            if str(f.get_nivel()) == str(dict(LEVEL_CHOICES).get(int(level)))
-        ]
-    if query:
-        families = families.filter(nome_titular__icontains=query)
-    context = {
-        "title": "Calendário de Visitas",
-        "families": families,
-        "nivel_selecionado": level,
-        "query": query,
-    }
-    return render(request, "seapac/calendar.html", context)
-
-
-def eventos_json(request):
-    eventos = Evento.objects.all()
-    data = [
-        {
-            "id": e.id,
-            "title": e.titulo,
-            "start": e.data.isoformat(),
-            "backgroundColor": "#4CAF50" if e.confirmado else "#4285F4",
-        }
-        for e in eventos
-    ]
-    return JsonResponse(data, safe=False)
-
-
-@csrf_exempt
-def criar_evento(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-
-        start_datetime = parse_datetime(data["start"])
-        data_evento = start_datetime.date()
-
-        titulo = data["title"]
-        familia_id = titulo.split()[0]
-        family = get_object_or_404(Family, id=familia_id)
-
-        if Evento.objects.filter(familia=family, data=data_evento).exists():
-            return JsonResponse(
-                {
-                    "status": "error",
-                    "message": "Esta família já possui visita marcada para este dia.",
-                },
-                status=400,
-            )
-
-        evento = Evento.objects.create(
-            titulo=titulo,
-            data=data_evento,
-            familia=family,
-        )
-
-        return JsonResponse({"status": "ok", "id": evento.id})
-
-    return JsonResponse({"status": "error"}, status=400)
-
-
-@csrf_exempt
-def deletar_evento(request, event_id):
-    if request.method == "DELETE":
-        try:
-            evento = Evento.objects.get(id=event_id)
-            evento.delete()
-            return JsonResponse({"status": "ok"})
-        except Evento.DoesNotExist:
-            return JsonResponse(
-                {"status": "error", "message": "Evento não encontrado"}, status=404
-            )
-
-
-@csrf_exempt
-def confirmar_evento(request, event_id):
-    if request.method == "POST":
-        try:
-            evento = Evento.objects.get(id=event_id)
-            evento.confirmado = True
-            evento.save()
-            return JsonResponse({"status": "ok", "message": "Evento confirmado"})
-        except Evento.DoesNotExist:
-            return JsonResponse(
-                {"status": "error", "message": "Evento não encontrado"}, status=404
-            )
-
-
-# -------------- GERAÇÃO DE RELATÓRIOS--------------
+# -------------- GERAÇÃO DE RELATÓRIOS/PDFs--------------
 
 
 @login_required
@@ -986,3 +999,21 @@ def relatorio_family_pdf(request, id):
     return FileResponse(
         pdf_buffer, as_attachment=True, filename=f"relatorio_{family.nome_titular}.pdf"
     )
+
+def pdf_timeline(request, id):
+    family = get_object_or_404(Family, id=id)
+    eventos = TimelineEvent.objects.filter(family=family).order_by("data", "id")
+
+    html_txt = render(request, 'seapac/timeline/pdf_timeline.html', {'family': family, 'events': eventos}).content.decode("utf-8")
+    css_path = finders.find('css/timeline_pdf.css')
+    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
+
+    response = HttpResponse(
+        pdf,
+        content_type='application/pdf',
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="timeline{family.nome_titular}.pdf"'
+    )
+
+    return response
