@@ -26,37 +26,6 @@
                 <div class="stat-value">{{ total_municipios }}</div>
             </div>
         </div>
-
-        <div class="stat-card">
-            <div class="stat-icon advanced">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">Total de Níveis Avançados</div>
-                <div class="stat-value">{{ total_avancado }}</div>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon intermediary">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">Total de Níveis Intermediário</div>
-                <div class="stat-value">{{ total_intermediario }}</div>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon basic">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">Total de Níveis Inicial</div>
-                <div class="stat-value">{{ total_inicial }}</div>
-            </div>
-        </div>
-
         <div class="stat-card">
             <div class="stat-icon technical">
                 <i class="fa-solid fa-user-tag"></i>
@@ -66,16 +35,6 @@
                 <div class="stat-value">{{ total_tecnicos }}</div>
             </div>
         </div>
-
-        <div class="stat-card">
-            <div class="stat-icon visits">
-                <i class="fa-solid fa-calendar"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-label">Visitas Marcadas</div>
-                <div class="stat-value">{{ total_visitas }}</div>
-            </div>
-        </div>
     </div>
     <div class="controls-section">
         {% include "partials/search.html" %}
@@ -83,10 +42,13 @@
     <div class="families-section">
         <div class="section-header">
             <h2>Famílias Cadastradas</h2>
-            <button class="btn btn-primary" onclick="redirect('{% url 'register' %}')">
-                <i class="fas fa-plus"></i>
-                Adicionar
-            </button>
+            <div class="buttons-header">
+                <button class="btn btn-primary" onclick="redirect('{% url 'register' %}')">
+                    <i class="fas fa-plus"></i>
+                    Adicionar
+                </button>
+                <button class="btn btn-primary" onclick="redirect('{% url 'import' %}')">Importar família</button>
+            </div>
         </div>
 
         <div class="families-grid">

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/flowlist.css' %}">
+
+{% endblock extra_head %}
+
+{% block center %}
+
+<a href="{% url 'dashboard' %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
+<div class="flow-header">
+    <div class="flow-header-main">
+        <h1 class='title'>{% block title %}{{ title }}{% endblock title %} {{ family.nome_titular }}</h1>
+    </div>
+    <div class="add-flow-group">
+        <label for="year-select"><small>Escolha um ano para adicionar fluxo</small></label>
+        <select id="year-select" class="year-select">
+            {% for y in anos %}
+                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn-add-flow" data-url-template="{% url 'new_subsystem_to_family' id=family.id ano=9999 %}" onclick="adicionarFluxo(this)">
+            Adicionar fluxo
+        </button>
+    </div>
+</div>
+
+<div class="box-flowlist">
+    <ul>
+        {% for renda in rendas %}
+        <li class="card-flows">
+            <div class="year-flow">
+                <span class="material-symbols-outlined">flowchart</span>
+                <h2><span>Fluxograma de</span> {{ renda.ano }}</h2>
+            </div>
+            <div class="assets">
+                <a href="{% url 'renda_familiar_detail' family.id renda.ano %}">
+                    <span class="material-symbols-outlined">attach_money</span>
+                    <p>Renda</p>
+                </a>
+
+                <a href="{% url 'flow' family.id renda.ano %}">
+                    <span class="material-symbols-outlined">visibility</span>
+                    <p>Visualizar fluxo</p>
+                </a>
+            </div>
+        </li>
+        {% empty %}
+            <div class="no-families">
+                <i class="fas fa-search"></i>
+                <h3>Nenhuma família encontrada</h3>
+                <p>Tente ajustar os filtros de pesquisa.</p>
+            </div>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

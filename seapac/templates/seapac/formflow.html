@@ -1,14 +1,24 @@
 {% extends 'base.html' %}
 {% load static %}
+
+{% block extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/formflow.css' %}">
+
+{% endblock extra_head %}
+
 {% block center %}
-<div class="flow-header">
-    <div class="flow-header-main">
-        <h1 class='title'>{% block title %}{{ title }}{% endblock title %} da {{ family.get_nome_familia }}</h1>
-    </div>
-</div>
 
 <form method="post">
     {% csrf_token %}
+    <div class="flow-header">
+        <div class="flow-header-main">
+            <h1 class='title'>{% block title %}{{ title }}{% endblock title %} da família {{ family.nome_titular }}</h1>
+        </div>
+        <div class="subsystem-btn-submit">
+            <button type="submit" class="btn btn-success">Salvar Subsistemas</button>
+        </div>
+    </div>
     <div class="form-sandbox">
         {% for subsystem in subsystems %}
             <div class='form-subsystem-block' id="form-block{{ subsystem.id }}">
@@ -16,19 +26,27 @@
                     <input type="checkbox" name="subsistemas" value="{{ subsystem.id }}"
                         {% if subsystem.id in selected_ids or subsystem.nome_subsistema == "UFPA" or subsystem.nome_subsistema == "Mercado Local" %}checked{% endif %}>
                     <div class="block-content">
-                        <div >{{ subsystem.nome_subsistema }}</div>
-                        {% if subsystem.get_photo_url %}
+                        <div class="subsys-image">
+                            {% if subsystem.get_photo_url %}
                             <img src="{{ subsystem.get_photo_url }}" alt="{{ subsystem.nome_subsistema }}" class="form-subsystem-image">
-                        {% else %}
+                            {% else %}
                             <img src="{% static 'img/fotos_subsistemas/' %}{{subsystem.id}}/{{subsystem.id}}.jpg" alt="imagem aleatória" class="form-subsystem-image">
-                        {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="subsys-info">
+                            <div class="name-subsys">{{ subsystem.nome_subsistema }}</div>
+                            {% if subsystem.tipo == 'ME' %}
+                                <p class="subsys-type">Mundo Externo</p>
+                            {% elif subsystem.tipo == 'TS' %}
+                                <p class="subsys-type">Tecnologia social</p>
+                            {% else %}
+                                <p class="subsys-type">Subsistema</p>
+                            {% endif %}
+                        </div>
                     </div>
                 </label>
             </div>
         {% endfor %}
-    </div>
-    <div class="subsystem-btn-submit">
-        <button type="submit" class="btn btn-success">Salvar Subsistemas</button>
     </div>
 </form>
 

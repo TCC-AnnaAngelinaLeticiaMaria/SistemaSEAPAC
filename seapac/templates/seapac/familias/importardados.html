@@ -17,7 +17,7 @@
         <div class="card-header bg-success text-white rounded-top">
             <h4 class="mb-0">
                 <i class="fas fa-user-plus"></i>
-                {{ title }}
+                Importar Família
             </h4>
         </div>
 
@@ -40,42 +40,17 @@
             </div>
             {% endif %}
 
-        <h5 class="text-success border-bottom pb-2">Informações do Titular</h5>
+        <h5 class="text-success border-bottom pb-2">Planilha de dados das Famílias</h5>
 
         <div class="row mt-3 h-100 d-flex align-items-stretch">
 
             <div class="col-md-6 d-flex flex-column">
                 <div class="mb-3">
-                    {{ form.nome_titular.label_tag }}
-                    {{ form.nome_titular }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.contato.label_tag }}
-                    {{ form.contato }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.data_inicio.label_tag }}
-                    {{ form.data_inicio }}
-                </div>
-                <div class="mb-3">
-                    {{ form.comunidade.label_tag }}
-                    {{ form.comunidade }}
-                </div>
-                <div class="mb-3">
-                    {{ form.municipio.label_tag }}
-                    {{ form.municipio }}
+                    <p>Arquivo:</p>
+                    {{ form.arquivo }}
+                    <small class="detail-import">Insira uma planilha que contenha os campos <strong>Nome Completo</strong>, <strong>Telefone</strong>, <strong>Comunidade</strong>, <strong>Município</strong></small>
                 </div>
             </div>
-
-            <div class="col-md-6 d-flex flex-column">
-                <div class="mb-3 flex-grow-1 d-flex flex-column">
-                    {{ form.projetos.label_tag }}
-                    {{ form.projetos }}
-                </div>
-            </div>
-
         </div>
 
         <div class="d-flex gap-3 justify-content-end pt-3 border-top">
