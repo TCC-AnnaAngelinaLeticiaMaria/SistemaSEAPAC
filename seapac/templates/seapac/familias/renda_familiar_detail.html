@@ -81,7 +81,7 @@
             <div class="divisoria"></div>
             <div class="lucro-view">
                 <div class="card-line space-between bold">
-                    <span>Lucro não monetário</span>
+                    <span>Lucro potencial</span>
                     <span class="money">R$ {{ renda_total_potencial }}</span>
                 </div>
                 <p class="text-muted">
@@ -158,7 +158,7 @@
                     <td>{{ p.valor }}</td>
                     <td>{{ p.custo_vendido }}</td>
                     <td>{{ p.receita }}</td>
-                    <td>{{ p.lucro }}</td>
+                    <td><strong>{{ p.lucro }}</strong></td>
                 </tr>
                 {% endif %}
             {% endif %}

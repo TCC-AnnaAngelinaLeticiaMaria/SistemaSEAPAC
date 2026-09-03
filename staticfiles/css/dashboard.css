@@ -638,12 +638,6 @@ body {
     }
 }
 
-@media (max-width: 1512px) {
-    .family-actions p {
-        display: none;
-    }
-}
-
 @media (max-width: 1024px) {
     .sidebar {
         transform: translateX(-100%);

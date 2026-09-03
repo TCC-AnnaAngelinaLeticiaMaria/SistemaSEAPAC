@@ -40,6 +40,18 @@ class Community(models.Model):
 LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
 
 
+class FamilySubsystem(models.Model):
+    subsystem = models.ForeignKey("Subsystem", on_delete=models.CASCADE)
+    family_renda = models.ForeignKey("FamilyRenda", on_delete=models.CASCADE, null=True)
+    produtos_saida = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        unique_together = ("family_renda", "subsystem")
+
+    def __str__(self):
+        return f"{self.family_renda.family.get_nome_familia()} - {self.subsystem.nome_subsistema}"
+
+
 class Family(models.Model):
     nome_titular = models.CharField(max_length=100)
     data_inicio = models.PositiveSmallIntegerField(null=True)
@@ -122,7 +134,7 @@ class FamilyRenda(models.Model):
                         "custo_unitario": 0,
                         "qtd_total": 0,
                         "qtd_vendida": 0,
-                        "unidade": "Não definida",
+                        "und": "Não definida",
                         "custo_total": 0,
                     }
 
@@ -155,7 +167,6 @@ class FamilyRenda(models.Model):
                 qtd_vendida = dados["qtd_vendida"]
                 
                 und = dados["und"]
-                valor_unitario = dados["valor_unitario"]
                 receita_real = dados["receita_total"]
                 valor_potencial = dados["valor_potencial"]
                 custo_unitario = dados["custo_unitario"]
@@ -166,8 +177,8 @@ class FamilyRenda(models.Model):
                 custo_vendido = qtd_vendida * custo_unitario
                 custo_nao_vendido = qtd_nao_vendida * custo_unitario
 
-                receita_real = valor_unitario * qtd_vendida
                 valor_unitario = receita_real / qtd_vendida if qtd_vendida else 0
+                receita_real = valor_unitario * qtd_vendida
                 lucro_real = receita_real - custo_total
 
                 receita_potencial = valor_potencial * qtd_total
@@ -261,16 +272,7 @@ class Subsystem(models.Model):
                 img.save(caminho)
 
 
-class FamilySubsystem(models.Model):
-    subsystem = models.ForeignKey("Subsystem", on_delete=models.CASCADE)
-    family_renda = models.ForeignKey("FamilyRenda", on_delete=models.CASCADE, null=True)
-    produtos_saida = models.JSONField(default=list, blank=True)
 
-    class Meta:
-        unique_together = ("family_renda", "subsystem")
-
-    def __str__(self):
-        return f"{self.family_renda.family.get_nome_familia()} - {self.subsystem.nome_subsistema}"
 
 
 class Project(models.Model):
