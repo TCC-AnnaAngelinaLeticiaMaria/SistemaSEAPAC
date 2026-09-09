@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/agricultores/dashboard_agricultor.css' %}">
+
+{% endblock extra_head %}
+
+{% block center %}
+<div class="page active" id="dashboard">
+    <div class="page-header">
+        <h1 class="page-title">{% block title %}{{ title }}{% endblock title %}</h1>
+    </div>
+
+    <div class="stats-grid ">
+        <a class="stat-card" href="{% url 'listar_fluxos' %}">
+            <div class="stat-icon agricultores-cards">
+                <img src="{% static 'img/fluxos-icon.png' %}" alt="">
+            </div>
+            <div class="stat-content">
+                <h2>Meus Fluxos produtivos</h2>
+                <p>Fluxo produtivo é o caminho que cada parte da produção faz dentro da sua fazenda</p>
+            </div>
+        </a>
+
+        <a class="stat-card">
+            <div class="stat-icon agricultores-cards">
+                <img src="{% static 'img/subsistemas-icon.png' %}" alt="">
+            </div>
+            <div class="stat-content">
+                <h2>Meus subsistemas</h2>
+                <p>Diferentes partes da produção </p>
+            </div>
+        </a>
+
+        <a class="stat-card">
+            <div class="stat-icon agricultores-cards">
+                <img src="{% static 'img/linhatempo-icon.png' %}" alt="">
+            </div>
+            <div class="stat-content">
+                <h2>Linha do tempo</h2>
+                <p>Uma linha do tempo organiza os acontecimentos da sua fazenda em ordem</p>
+            </div>
+        </a>
+
+    </div>
+</div>
+{% endblock %}

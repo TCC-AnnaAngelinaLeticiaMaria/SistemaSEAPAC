@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Usuario
+from .models import Agricultor, Tecnico
 
 
-@admin.register(Usuario)
-class UsuarioAdmin(UserAdmin):
-    model = Usuario
+@admin.register(Tecnico)
+class TecnicoAdmin(UserAdmin):
+    model = Tecnico
     list_display = ["username", "email", "cpf", "nome_cidade", "is_staff", "is_active"]
     list_filter = ["is_staff", "is_active", "groups"]
     search_fields = ["username", "email", "cpf"]
@@ -24,3 +24,17 @@ class UsuarioAdmin(UserAdmin):
             },
         ),
     )
+
+@admin.register(Agricultor)
+class AgricultorAdmin(admin.ModelAdmin):
+    list_display = (
+        "username",
+        "email",
+        "primeiro_acesso",
+    )
+
+    @admin.display(description='Nome de Titular')
+    def nome_titular(self, object):
+        if object.familia:
+            return object.familia.nome_titular
+        return '-'

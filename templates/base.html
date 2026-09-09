@@ -11,7 +11,11 @@
 </head>
 <body>
     {% include "partials/header.html" %}
-    {% include "partials/sidebar.html" %}
+    {% if user.is_agricultor %}
+        {% include "partials/sidebar_agricultor.html" %}
+    {% else %}
+        {% include "partials/sidebar.html" %}
+    {% endif %}
     <button class="mobile-menu-toggle" id="mobileMenuToggle">
         <i class="fas fa-bars"></i>
     </button>

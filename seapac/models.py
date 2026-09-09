@@ -4,7 +4,6 @@ from django.conf import settings
 from PIL import Image
 from django.utils import timezone
 
-
 class Technician(models.Model):
     STATUS_CHOICES = [
         ("agropecuária", "Agropecuária"),
@@ -42,7 +41,7 @@ LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
 class Family(models.Model):
     nome_titular = models.CharField(max_length=100)
     data_inicio = models.PositiveSmallIntegerField(null=True)
-    contato = models.CharField(max_length=30)
+    contato = models.CharField(max_length=30, unique=True, null=True)
     municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE)
     comunidade = models.ForeignKey(Community, on_delete=models.CASCADE,  null=True)
     projetos = models.ManyToManyField("Project", blank=True)
@@ -65,6 +64,7 @@ class Family(models.Model):
 
     def get_visitas_confirmadas(self):
         return self.eventos.filter(confirmado=True).count()
+
 
 def currentyear():
         return timezone.now().year

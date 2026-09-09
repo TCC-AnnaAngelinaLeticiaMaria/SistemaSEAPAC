@@ -1,0 +1,52 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Informações Cadastro Família {{ family.nome_titular }}{% endblock %}
+
+{% block extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/agricultores/dashboard_agricultor.css' %}">
+
+{% endblock extra_head %}
+
+{% block center %}
+<a href="{% url 'dashboard' %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h2 class="mb-4">
+                <i class="bi bi-person-circle text-success"></i>Família {{ family.nome_titular }} cadastrada com sucesso!
+            </h2>
+            <p>Entregue estas informações ao agricultor ou armazene-as:</p>
+
+            <div class="container-info">
+                <div class="col-lg-4">
+                    <div class="info">
+                        <strong>Login:</strong>
+                        <p>
+                            {{ familia.contato }}
+                        </p>
+                    </div>
+
+                    <div class="info">
+                        <strong>Senha temporária:</strong>
+                        <p>
+                            {{ senha_temporaria }}
+                        </p>
+                    </div>
+                    
+                    <small style="color: grey;">
+                        O agricultor deverá alterar essa senha no primeiro acesso.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
