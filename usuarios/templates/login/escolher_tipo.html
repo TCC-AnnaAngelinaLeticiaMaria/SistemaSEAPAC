@@ -1,0 +1,128 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema SEAPAC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-green: #4CAF50;
+            --light-green: #E8F5E9;
+            --dark-green: #223f1f;
+            --gray-600: #475569;
+            --lighter-green: #EAF4CC;
+            --gray-400: #94a3b8;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-green) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 800px;
+            width: 600px;
+            margin: 20px;
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-top {
+            width: 100%;
+            margin-bottom: 6px;
+        }
+
+        .login-top h2 {
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .login-top p {
+            color: var(--gray-600);
+            text-align: center;
+        }
+
+        .choices {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .choices > a {
+            width: 200px;
+            max-width: 250px;
+            border: 0;
+            box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 10px 20px;
+        }
+
+        .choices > a img {
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .choices > a:hover {
+            background-color: var(--lighter-green);
+            border: 0;
+            box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+            transition: 5ms all ease-in-out;
+        }
+
+        .choices > a p {
+            color: var(--gray-600);
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="login-container"> 
+
+            <div class="login-top">
+                <h2>Você é ...</h2>
+                <p>Escolha o tipo de conta que você quer criar</p>
+            </div>
+
+            <div class="choices">
+                <a href="{% url 'login_agricultor' %}" class="btn btn-success mt-auto">
+                    <img src="{% static 'img/agricultor_icon.png' %}" alt="agricultor">
+                    <p>Agricultor</p>
+                </a>
+
+                <a href="{% url 'login_tecnico' %}" class="btn btn-primary mt-auto">
+                    <img src="{% static 'img/tecnico_icon.png' %}" alt="tecnico">
+                    <p>Técnico</p>
+                </a>
+            </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

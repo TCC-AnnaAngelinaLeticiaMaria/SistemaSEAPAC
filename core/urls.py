@@ -26,6 +26,7 @@ from usuarios.views import *
 urlpatterns = [
     path("admin/", admin.site.urls, name="adm"),
     path("", index, name="index"),
+    path("dashboard_agricultores/", dashboard_agricultores, name='dashboard_agricultores'),
     path("dashboard/", dashboard, name="dashboard"),
     # fluxo
     path("<str:id>/fluxo/<int:ano>/", flow, name="flow"),
@@ -62,6 +63,10 @@ urlpatterns = [
     path("lista-tecnicos/detalhar/<int:pk>/", detail_tecs, name="detail_tecs"),
     path("lista-tecnicos/editar/<int:pk>/", edit_tecs, name="edit_tecs"),
     path("lista-tecnicos/deletar/<int:pk>/", delete_tecs, name="delete_tecs"),
+    #agricultores
+    path('dashboard_agricultor/', dashboard_agricultores, name='dashboard_agricultor'),
+    path('listar_fluxos/', list_flows_agricultor, name='listar_fluxos'),
+    path('<str:id>/fluxos_agricultor/<int:ano>/', flow_agricultor, name='fluxos_agricultor'),
     # timeline
     path("<str:id>/timeline/", timeline, name="timeline"),
     path("<str:id>/timeline/novo/", add_timeline, name="add_timeline"),

@@ -27,6 +27,9 @@ from .forms import (
     TimelineEventEditForm,
     ImportarPlanilha,
 )
+from usuarios.models import Agricultor
+from django.contrib.auth.models import Group
+from usuarios.decorators import group_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -34,6 +37,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 from .reports.pdf import gerar_relatorio_family
 from django.core.paginator import Paginator
+from .mixins import GroupRequireMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles import finders
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -43,19 +47,26 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.views import View
+from django.db import transaction
 from weasyprint import HTML, CSS
 import pandas as pd
 import unicodedata
-import os
+import secrets
+import openpyxl
+import re
 
 import json
 
-LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
+#**********************************
+#*************TÉCNICOS*************
+#**********************************
 
+LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
 
 # --------------DASHBOARD--------------
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def dashboard(request):
     level = request.GET.get("nivel")
     query = request.GET.get("q")
@@ -99,6 +110,25 @@ def normalizarColunas(coluna_nome):
 
         return ' '.join(coluna_nome.split())
 
+def normalizar_contato(contato):
+    if pd.isna(contato):
+        return None
+
+    contato = str(contato).strip()
+
+    if contato.endswith(".0"):
+        contato = contato[:-2]
+
+    contato = re.sub(r"\D", "", contato)
+
+    if not contato:
+        return None
+
+    if len(contato) != 11:
+        return None
+
+    return contato
+
 def verificarCampos(dataFrame, campos):
     colunas = {}
 
@@ -111,9 +141,9 @@ def verificarCampos(dataFrame, campos):
             return colunas[campo]
 
     return None
-    
 
-class ImportarDadosExcel(View, LoginRequiredMixin):
+class ImportarDadosExcel(LoginRequiredMixin, GroupRequireMixin, View):
+    allowed_groups = ['TECNICOS']
 
     def get(self, request):
         familia = Family.objects.all()
@@ -123,6 +153,12 @@ class ImportarDadosExcel(View, LoginRequiredMixin):
     def post(self, request):
 
         form = ImportarPlanilha(request.POST, request.FILES)
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Informações de login das famílias'
+
+        ws.append(['Nome do Titular', 'Contato', 'Senha'])
 
         if form.is_valid():
             arq = request.FILES['arquivo']
@@ -134,37 +170,85 @@ class ImportarDadosExcel(View, LoginRequiredMixin):
 
             campo_municipio = verificarCampos(dataFrame, ['Município', 'Municipio'])
 
-            for _, row in dataFrame.iterrows():
-                municipio, created1 = Municipality.objects.get_or_create(
-                    nome=row[campo_municipio]
-                )
+            with transaction.atomic():
 
-                comunidade, created2 = Community.objects.get_or_create(
-                    nome_comunidade=row['Comunidade'],
-                    defaults={'municipio': municipio}
-                )
+                for _, row in dataFrame.iterrows():
 
-                familia, created3 = Family.objects.get_or_create(
-                    nome_titular= row[campo_nome],
-                    municipio= municipio, 
-                    defaults={
-                        'contato': row[campo_contato],
-                        'comunidade': comunidade,
-                    }
-                )
-            return redirect('dashboard')
+                    contato = normalizar_contato(row[campo_contato])
+
+                    municipio, created1 = Municipality.objects.get_or_create(
+                        nome=row[campo_municipio]
+                    )
+
+                    comunidade, created2 = Community.objects.get_or_create(
+                        nome_comunidade=row['Comunidade'],
+                        municipio=municipio,
+                    )
+
+                    familia, created3 = Family.objects.get_or_create(
+                        nome_titular= row[campo_nome],
+                        municipio= municipio, 
+                        defaults={
+                            'contato': contato,
+                            'comunidade': comunidade,
+                        }
+                    )
+
+                    if created3 and familia.contato:
+                        senha_temporaria = secrets.token_urlsafe(8)
+                        agricultor = Agricultor.objects.create_user(
+                            username=familia.contato,
+                            password=senha_temporaria,
+                            familia=familia
+                        )
+            
+                        grupo, _ = Group.objects.get_or_create(name='AGRICULTORES')
+                        agricultor.groups.add(grupo)
+
+                        ws.append([familia.nome_titular, familia.contato, senha_temporaria])
+
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename=Credenciais_temporarias_agricultores.xlsx'
+
+            wb.save(response)
+
+            return response
         return render(request, "seapac/familias/importardados.html", {'form': form})
 
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def register(request):
+
     if request.method == "POST":
         form = FamilyForm(request.POST, request.FILES)
         if form.is_valid():
-            family = form.save(commit=False)
-            family.save()
-            return redirect("flow_list", id=family.id)
+
+            with transaction.atomic():
+                family = form.save(commit=False)
+                family.save()
+
+                senha_temporaria = secrets.token_urlsafe(8)
+                agricultor = Agricultor.objects.create_user(
+                    username=family.contato,
+                    password=senha_temporaria,
+                    familia=family
+                )
+
+                grupo, _ = Group.objects.get_or_create(name='AGRICULTORES')
+                agricultor.groups.add(grupo)
+
+            return render(
+                request,
+                "seapac/info_cadastro_agricultor.html",
+                {
+                    "familia": family,
+                    "senha_temporaria": senha_temporaria,
+                }
+            )
     else:
         form = FamilyForm()
     return render(
@@ -176,6 +260,7 @@ def register(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS', 'AGRICULTORES')
 def detail_family(request, id):
     family = get_object_or_404(Family, id=id)
     context = {"family": family, "title": "Detalhes da "}
@@ -184,6 +269,7 @@ def detail_family(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def edit_family(request, id):
     family = get_object_or_404(Family, id=id)
 
@@ -201,6 +287,7 @@ def edit_family(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def list_families(request):
     # level = request.GET.get("nivel")
     query = request.GET.get("q")
@@ -242,6 +329,7 @@ def list_families(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def delete_family(request, id):
     family = get_object_or_404(Family, id=id)
     family.delete()
@@ -256,6 +344,7 @@ def delete_family(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS', 'AGRICULTORES')
 def renda_familiar_detail(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -278,6 +367,7 @@ def renda_familiar_detail(request, id, ano):
 # --------------CRUD PROJETOS (COMPLETO)------------------
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def list_projects(request):
     status = request.GET.get("status")
     query = request.GET.get("q")
@@ -303,6 +393,7 @@ def list_projects(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def create_projects(request):
     if request.method == "POST":
         form = ProjectForm(request.POST, request.FILES)
@@ -321,6 +412,7 @@ def create_projects(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def edit_projects(request, pk):
     projetos = get_object_or_404(Project, pk=pk)
 
@@ -341,6 +433,7 @@ def edit_projects(request, pk):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def detail_projects(request, pk):
     projetos = get_object_or_404(Project, pk=pk)
     context = {"projetos": projetos}
@@ -349,6 +442,7 @@ def detail_projects(request, pk):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def delete_projects(request, pk):
     projetos = get_object_or_404(Project, pk=pk)
     projetos.delete()
@@ -361,6 +455,7 @@ def delete_projects(request, pk):
 # --------------CRUD TECNICOS (COMPLETO)--------------
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def list_tecs(request):
     especialidade = request.GET.get("especialidade")
     query = request.GET.get("q")
@@ -385,6 +480,7 @@ def list_tecs(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def create_tecs(request):
     if request.method == "POST":
         form = TechnicianForm(request.POST)
@@ -404,6 +500,7 @@ def create_tecs(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def edit_tecs(request, pk):
     tecs = get_object_or_404(Technician, pk=pk)
 
@@ -424,6 +521,7 @@ def edit_tecs(request, pk):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def detail_tecs(request, pk):
     tecs = get_object_or_404(Technician, pk=pk)
     context = {"tecs": tecs}
@@ -432,6 +530,7 @@ def detail_tecs(request, pk):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def delete_tecs(request, pk):
     tecs = get_object_or_404(Technician, pk=pk)
     tecs.delete()
@@ -444,6 +543,7 @@ def delete_tecs(request, pk):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def list_subsystems(request):
     query = request.GET.get("q")
     subsistemas = Subsystem.objects.all()
@@ -459,6 +559,7 @@ def list_subsystems(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS', 'AGRICULTORES')
 def detail_subsystems(request, id):
     subsistema = get_object_or_404(Subsystem, id=id)
     context = {"subsistema": subsistema, "title": "Detalhes do Subsistema"}
@@ -467,6 +568,7 @@ def detail_subsystems(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def create_subsystems(request):
     if request.method == "POST":
         form = SubsystemForm(request.POST, request.FILES)
@@ -485,6 +587,7 @@ def create_subsystems(request):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def edit_subsystems(request, id):
     subsistema = get_object_or_404(Subsystem, id=id)
 
@@ -508,6 +611,7 @@ def edit_subsystems(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def delete_subsystems(request, id):
     subsistema = get_object_or_404(Subsystem, id=id)
     subsistema.delete()
@@ -520,6 +624,7 @@ def delete_subsystems(request, id):
 # --------------CRUD FLUXO+SUBSISTEMAS--------------
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def flow(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda_ano = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -686,6 +791,7 @@ def flow(request, id, ano):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def flow_list(request, id):
     current_year = currentyear()
 
@@ -696,6 +802,7 @@ def flow_list(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def subsystem_panel(request, family_id, subsystem_id, renda_id):
     family = get_object_or_404(Family, id=family_id)
     family_renda = get_object_or_404(FamilyRenda, family=family, id=renda_id)
@@ -731,6 +838,7 @@ def subsystem_panel(request, family_id, subsystem_id, renda_id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def new_subsystem_to_family(request, id, ano):
     current_year = currentyear()
 
@@ -768,6 +876,7 @@ def new_subsystem_to_family(request, id, ano):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def edit_subsystem_panel(request, family_id, subsystem_id, renda_id):
     family = get_object_or_404(Family, id=family_id)
     family_renda = get_object_or_404(FamilyRenda, family=family, id=renda_id)
@@ -877,6 +986,7 @@ def edit_subsystem_panel(request, family_id, subsystem_id, renda_id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS', 'AGRICULTORES')
 def timeline(request, id):
     family = get_object_or_404(Family, id=id)
     timeline_events = family.timeline_events.all().order_by("data", "id")
@@ -907,6 +1017,7 @@ def timeline(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def add_timeline(request, id):
     family = get_object_or_404(Family, id=id)
     timeline_events = family.timeline_events.all().order_by("data")
@@ -929,6 +1040,7 @@ def add_timeline(request, id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def delete_timeline(request, id, event_id):
     family = get_object_or_404(Family, id=id)
     evento = get_object_or_404(TimelineEvent, id=event_id, family=family)
@@ -941,6 +1053,7 @@ def delete_timeline(request, id, event_id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def edit_timeline(request, id, event_id):
     family = get_object_or_404(Family, id=id)
     event = get_object_or_404(TimelineEvent, id=event_id, family=family)
@@ -969,6 +1082,7 @@ def edit_timeline(request, id, event_id):
 
 @never_cache
 @login_required
+@group_required('TECNICOS')
 def search_timeline_event(request, id):
     family = get_object_or_404(Family, id=id)
 
@@ -992,6 +1106,7 @@ def search_timeline_event(request, id):
 
 
 @login_required
+@group_required('TECNICOS')
 def relatorio_family_pdf(request, id):
     family = get_object_or_404(Family, id=id)
     pdf_buffer = gerar_relatorio_family(family)
@@ -1000,6 +1115,8 @@ def relatorio_family_pdf(request, id):
         pdf_buffer, as_attachment=True, filename=f"relatorio_{family.nome_titular}.pdf"
     )
 
+@login_required
+@group_required('TECNICOS')
 def pdf_timeline(request, id):
     family = get_object_or_404(Family, id=id)
     eventos = TimelineEvent.objects.filter(family=family).order_by("data", "id")
@@ -1017,3 +1134,45 @@ def pdf_timeline(request, id):
     )
 
     return response
+
+#------------------------------------------------------------------------
+
+#**********************************
+#***********AGRICULTORES***********
+#**********************************
+
+@never_cache
+@login_required
+@group_required('AGRICULTORES')
+def dashboard_agricultores(request):
+    
+    context = {
+        "title": "Página Inicial",
+    }
+    return render(request, "seapac/agricultores/dashboard_agricultor.html", context)
+
+@never_cache
+@login_required
+@group_required('AGRICULTORES')
+def list_flows_agricultor(request):
+    family = get_object_or_404(Family, agricultor=request.user)
+    rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
+    
+    context = {
+        "title": "Fluxos",
+        'rendas': rendas,
+        'family': family
+    }
+    return render(request, "seapac/agricultores/flow_agricultor.html", context)
+
+@never_cache
+@login_required
+@group_required('AGRICULTORES')
+def flow_agricultor(request):
+    
+    context = {
+        "title": "Fluxos",
+    }
+    return render(request, "seapac/agricultores/flow_agricultor.html", context)
+
+

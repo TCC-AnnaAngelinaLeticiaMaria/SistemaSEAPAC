@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "django_mermaid.apps.MermaidConfig",
     "seapac",
     "usuarios",
+    "formtools",
 ]
 
 MIDDLEWARE = [
@@ -155,9 +156,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "usuarios.Usuario"
 
 # URLs de redirecionamento após login/logout
-LOGIN_URL = "login"
+LOGIN_URL = "escolher_tipo"
 LOGIN_REDIRECT_URL = "index"
-LOGOUT_REDIRECT_URL = "login"
+LOGOUT_REDIRECT_URL = "escolher_tipo"
 
 # Recursos para recuperação de senha pelo próprio Django
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

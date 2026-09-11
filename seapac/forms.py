@@ -168,6 +168,22 @@ class FamilyForm(ModelForm):
             ),
         }
 
+    def clean_contato(self):
+        contato = self.cleaned_data['contato']
+
+        contato = re.sub(r'/D', '', str(contato))
+
+        if len(contato) != 11:
+            raise forms.ValidationError(
+                'O telefone deve possuir 11 números, incluindo o DDD.'
+            )
+
+        if Family.objects.filter(contato=contato).exists():
+            raise forms.ValidationError(
+                'Já existe alguém cadastrado com esse número de telefone!'
+            )
+        
+        return contato
 
 class FamilyEditForm(FamilyForm):
 

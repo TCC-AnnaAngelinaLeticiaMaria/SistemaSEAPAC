@@ -1,6 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import Usuario
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError as DjangoValidatorError
+from .models import Usuario, Tecnico, Agricultor
 from django.contrib.auth.models import Group
 from seapac.models import Municipality
 from .validators import validate
@@ -8,7 +11,7 @@ import re
 from PIL import Image
 
 
-class UsuarioCreationForm(UserCreationForm):
+class TecnicoCreationForm(UserCreationForm):
     nome_cidade = forms.ModelChoiceField(
         queryset=Municipality.objects.all(),
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -17,7 +20,7 @@ class UsuarioCreationForm(UserCreationForm):
     )
 
     class Meta:
-        model = Usuario
+        model = Tecnico
         fields = [
             "username",
             "email",
@@ -63,6 +66,19 @@ class UsuarioCreationForm(UserCreationForm):
 
         return re.sub(r"\D", "", cpf)
 
+class AgricultorLoginForm(AuthenticationForm):
+    username = forms.CharField(
+        label="Número de telefone",
+        widget= forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'Ex.: 84999999999'}
+        )
+    )
+    password = forms.CharField(
+        label="Senha",
+        widget=forms.PasswordInput(
+            attrs={'class': 'form-control', 'placeholder': 'Mínimo de 6 letras e/ou números'}
+        )
+    )
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -76,8 +92,7 @@ class LoginForm(AuthenticationForm):
         )
     )
 
-
-class PerfilForm(forms.ModelForm):
+class PerfilTecnicoForm(forms.ModelForm):
     nome_cidade = forms.ModelChoiceField(
         queryset=Municipality.objects.all(),
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -86,7 +101,7 @@ class PerfilForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Usuario
+        model = Tecnico
         fields = [
             "first_name",
             "last_name",
@@ -148,8 +163,7 @@ class PerfilForm(forms.ModelForm):
 
         return foto
 
-
-class UsuarioFiltroForm(forms.Form):
+class TecnicoFiltroForm(forms.Form):
 
     username = forms.CharField(
         required=False,
@@ -199,7 +213,7 @@ class UsuarioFiltroForm(forms.Form):
     )
 
 
-class UsuarioEditForm(forms.ModelForm):
+class TecnicoEditForm(forms.ModelForm):
 
     grupos = forms.ModelMultipleChoiceField(
         queryset=Group.objects.all(),
@@ -209,7 +223,7 @@ class UsuarioEditForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Usuario
+        model = Tecnico
         fields = [
             "username",
             "first_name",

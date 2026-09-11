@@ -282,8 +282,6 @@ body {
     background: linear-gradient(135deg, var(--success), #00b894);
 }
 
-
-
 .stat-content {
     flex: 1;
 }
