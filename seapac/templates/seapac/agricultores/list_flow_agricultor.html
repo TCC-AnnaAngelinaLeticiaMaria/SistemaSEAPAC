@@ -22,12 +22,12 @@
                     <h2><span>Fluxograma de</span> {{ renda.ano }}</h2>
                 </div>
                 <div class="assets">
-                    <a href="{% url 'renda_familiar_detail' family.id renda.ano %}">
+                    <a href="{% url 'renda_agricultor' family.id renda.ano %}">
                         <span class="material-symbols-outlined">attach_money</span>
                         <p>Renda</p>
                     </a>
 
-                    <a href="{% url 'flow' family.id renda.ano %}">
+                    <a href="{% url 'fluxos_agricultor' family.id renda.ano %}">
                         <span class="material-symbols-outlined">visibility</span>
                         <p>Visualizar fluxo</p>
                     </a>
@@ -36,8 +36,8 @@
             {% empty %}
                 <div class="no-families">
                     <i class="fas fa-search"></i>
-                    <h3>Nenhuma família encontrada</h3>
-                    <p>Tente ajustar os filtros de pesquisa.</p>
+                    <h3>Nenhum registro encontrado</h3>
+                    <p>Ainda não foram adicionadas informações sobre sua unidade produtiva.</p>
                 </div>
             {% endfor %}
         </ul>

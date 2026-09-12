@@ -67,6 +67,8 @@ urlpatterns = [
     path('dashboard_agricultor/', dashboard_agricultores, name='dashboard_agricultor'),
     path('listar_fluxos/', list_flows_agricultor, name='listar_fluxos'),
     path('<str:id>/fluxos_agricultor/<int:ano>/', flow_agricultor, name='fluxos_agricultor'),
+    path('<str:id>/renda_agricultor/<int:ano>/', renda_agricultor, name='renda_agricultor'),
+    path('<str:id>/detalhes_renda_agricultor/<int:ano>/', renda_details_agricultor, name='renda_details_agricultor'),
     # timeline
     path("<str:id>/timeline/", timeline, name="timeline"),
     path("<str:id>/timeline/novo/", add_timeline, name="add_timeline"),
