@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/renda.css' %}">
+{% endblock extra_head %}
+
+{% block center %}
+
+<a href="{% url 'flow_list' family.id %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
+<h1 class='title'>
+    {% block title %}{{ title }}{% endblock title %} {{ family.get_nome_familia }} - {{ ano }}
+</h1>
+
+<section class="resumo-container agricultor-page">
+    
+    <div class="card-renda shadow">
+        <div class="cabecalho back-green">
+            <h2>
+                <span class="material-symbols-outlined icon">payments</span>
+                <strong>Valor do que foi vendido pela família</strong>
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="card-line space-between">
+                <span>Dinheiro que <strong>entrou</strong>:</span>
+                <span class="green-font bold money">R$ {{ total_receita }}</span>
+            </div>
+            <div class="card-line space-between">
+                <span>Dinheiro que <strong>saiu</strong>:</span>
+                <span class="red-font bold money">R$ {{ total_custo }}</span>
+            </div>
+            <div class="divisoria"></div>
+            <div class="lucro-view">
+                <div class="card-line space-between bold">
+                    <span>Resultado</span>
+                    <span class="money" style="color: {{ color_result }};">R$ {{ renda_total }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card-renda shadow">
+        <div class="cabecalho back-green">
+            
+            <h2>
+                <span class="material-symbols-outlined icon">grocery</span><strong>Valor do total produzido</strong>
+            </h2>
+            <p>(O que foi consumido pela família junto do que foi vendido)</p>
+        </div>
+        <div class="card-content">
+            <div class="card-line space-between">
+                <span>Valor total do que a família <strong>vendeu e consumiu</strong>:</span>
+                <span class="green-font bold money">R$ {{ total_receita_potencial }}</span>
+            </div>
+            <div class="card-line space-between">
+                <span>Dinheiro que <strong>saiu</strong>:</span>
+                <span class="red-font bold money">R$ {{ total_custo }}</span>
+            </div>
+            <div class="divisoria"></div>
+            <div class="lucro-view">
+                <div class="card-line space-between bold">
+                    <span>A produção (vendida e consumida) foi de valor</span>
+                    <span class="money" style="color: {{ color_result_potencial }};">R$ {{ renda_total_potencial }}</span>
+                </div>
+                <p class="text-muted">
+                    Diferença de <strong>R$ {{ diferenca }}</strong> entre o valor real e o potencial.
+                </p>
+            </div>
+        </div>
+    </div>
+    <a class="btn btn-primary" href="{% url 'renda_detalhes_agricultor' family.id ano %}">
+        <span class="material-symbols-outlined">arrow_outward</span>Ver detalhes
+    </a>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+</script>
+{% endblock extra_js %}

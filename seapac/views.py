@@ -1185,6 +1185,22 @@ def renda_agricultor(request, id, ano):
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
     resultado = renda.calcular_renda()
 
+    renda_total = resultado["renda_total"]
+    renda_potencial = resultado["renda_total_potencial"]
+    
+    renda_total = renda_total.replace('.', '').replace(',','.')
+    renda_potencial = renda_potencial.replace('.', '').replace(',','.')
+
+    color_result = "var(--secondary-green)"
+
+    if float(renda_total) < 0:
+        color_result="var(--error)"
+
+    color_result_potencial = "var(--secondary-green)"
+    if float(renda_potencial) < 0:
+        color_result_potencial="var(--error)"
+
+
     context = {
         "family": family,
         "ano": ano,
@@ -1195,6 +1211,9 @@ def renda_agricultor(request, id, ano):
         "renda_total_potencial": resultado["renda_total_potencial"],
         "title": f"Renda da ",
         "diferenca": resultado["diferenca"],
+        "color_result": color_result,
+        "color_result_potencial":color_result_potencial,
+
     }
     return render(request, "seapac/agricultores/renda_agricultor.html", context)
 

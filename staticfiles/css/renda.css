@@ -224,6 +224,26 @@ section.detalhamento-producao {
   font-size: var(--font-size-sm);
 }
 
+/* EXCLUSIVO - Agricultor */
+.resumo-container.agricultor-page {
+    display: block;
+}
+
+.agricultor-page .icon{
+    font-size: var(--font-size-4xl);
+    position: relative;
+    top: 4px;
+}
+
+.agricultor-page .lucro-view .card-line {
+  font-size: var(--font-size-xl);
+}
+
+#btn-details-renda {
+  display: block;
+  width: fit-content;
+}
+
 /* Responsive design */
 /* TELA MENORES - Atributos gerais */
 @media (max-width: 1024px) {
