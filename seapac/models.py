@@ -103,9 +103,6 @@ class FamilyRenda(models.Model):
             family_subsystem.save()
         return family_subsystem
 
-    def get_visitas_confirmadas(self):
-        return self.eventos.filter(confirmado=True).count()
-
     def formatar_valor(self, valor):
         return format_decimal(valor, locale='pt_BR', format='#,##0.00')
 
