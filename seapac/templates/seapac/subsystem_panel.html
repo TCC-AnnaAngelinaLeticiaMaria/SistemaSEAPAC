@@ -2,7 +2,7 @@
 {% load static %}
 {% block center %}
 
-<a href="{% url 'flow_list' family.id %}" class="btn-voltar-page">
+<a href="{% url 'flow' family.id renda_ano.ano %}" class="btn-voltar-page">
     <span class="material-symbols-outlined">arrow_back</span>
     Voltar
 </a>

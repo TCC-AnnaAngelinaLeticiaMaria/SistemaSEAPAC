@@ -72,7 +72,7 @@ form {
 
 form .subsystem-btn-submit {
     display: flex;
-    align-self: flex-end;
+    align-self: center;
 }
 
 .form-sandbox {

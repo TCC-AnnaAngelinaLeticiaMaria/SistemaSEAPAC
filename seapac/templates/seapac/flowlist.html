@@ -7,6 +7,65 @@
 
 {% endblock extra_head %}
 
+{% block extra_js %}
+{{ block.super }}
+<script>
+
+    document.querySelectorAll('.more-flow-detail').forEach(button => {
+        button.addEventListener('click', function () {
+            const assets = this.closest('.assets');
+            const duplicadeLink = assets.querySelector('.duplicade-flow');
+            const boxFunctions = assets.querySelector('.box-functions')
+
+            if (duplicadeLink.classList.contains('active-duplicade') && boxFunctions.classList.contains('active-box')) {
+                duplicadeLink.classList.remove('active-duplicade');
+                duplicadeLink.classList.add('deactive-duplicade');
+
+                boxFunctions.classList.remove('active-box')
+                boxFunctions.classList.add('deactivate-box')
+            } else {
+                duplicadeLink.classList.remove('deactive-duplicade');
+                duplicadeLink.classList.add('active-duplicade');
+
+                boxFunctions.classList.remove('deactivate-box')
+                boxFunctions.classList.add('active-box')
+            }
+        });
+    });
+
+
+    document.querySelectorAll('.duplicade-flow').forEach(button => {
+        button.addEventListener('click', function () {
+            const assets = this.closest('.assets');
+            const cardDuplicade = assets.querySelector('.card-duplicade');
+
+            if (this.classList.contains('active-duplicade')) {
+                cardDuplicade.showModal();
+            }
+        });
+    });
+
+
+    document.querySelectorAll('.close-card').forEach(button => {
+        button.addEventListener('click', function () {
+            const cardDuplicade = this.closest('.card-duplicade');
+            cardDuplicade.close();
+        });
+    });
+
+    function adicionarFluxo(btn) {
+        const dialog = btn.closest('.card-duplicade');
+        const select = dialog.querySelector('.year-select');
+
+        const ano = select.value;
+
+        const url = btn.dataset.urlTemplate.replace('9999', ano);
+        window.location.href = url
+    }
+
+</script>
+{% endblock extra_js %}
+
 {% block center %}
 
 <a href="{% url 'dashboard' %}" class="btn-voltar-page">
@@ -19,15 +78,9 @@
         <h1 class='title'>{% block title %}{{ title }}{% endblock title %} {{ family.nome_titular }}</h1>
     </div>
     <div class="add-flow-group">
-        <label for="year-select"><small>Escolha um ano para adicionar fluxo</small></label>
-        <select id="year-select" class="year-select">
-            {% for y in anos %}
-                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
-            {% endfor %}
-        </select>
-        <button class="btn-add-flow" data-url-template="{% url 'new_subsystem_to_family' id=family.id ano=9999 %}" onclick="adicionarFluxo(this)">
+        <a class="btn-add-flow" href="{% url 'form_subsystem_to_family' family.id %}">
             Adicionar fluxo
-        </button>
+        </a>
     </div>
 </div>
 
@@ -49,12 +102,35 @@
                     <span class="material-symbols-outlined">visibility</span>
                     <p>Visualizar fluxo</p>
                 </a>
+                <div class="box-functions deactivate-box">
+                    <button class="duplicade-flow deactive-duplicade">Duplicar fluxo</button>
+                    <a href="{% url 'delete_subsystem_to_family' family.id renda.ano %}" class="delete-flow">Deletar fluxo</a>
+                </div>
+                <span class="material-symbols-outlined more-flow-detail">more_vert</span>
+
+                <dialog class="card-duplicade">
+                    <div>
+                        <span class="material-symbols-outlined close-card">close</span>
+                        <p for="year-select">
+                            <small>Escolha um ano para adicionar fluxo</small>
+                        </p>
+                        <select class="year-select">
+                            {% for y in anos %}
+                                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn-add-flow" data-url-template="{% url 'duplicade_subsystem_to_family' id=family.id ano=9999 renda_ano=renda.ano %}" onclick="adicionarFluxo(this)">
+                            Adicionar fluxo
+                        </button>
+                    </div>
+                </dialog>
+
             </div>
         </li>
         {% empty %}
             <div class="no-families">
                 <i class="fas fa-search"></i>
-                <h3>Nenhuma família encontrada</h3>
+                <h3>Nenhum registro encontrado</h3>
                 <p>Tente ajustar os filtros de pesquisa.</p>
             </div>
         {% endfor %}

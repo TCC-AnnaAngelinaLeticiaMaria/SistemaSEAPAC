@@ -89,20 +89,32 @@
 
 .add-flow-group {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 10px;
     height: fit-content;
+    margin-bottom: 20px;
 }
 
-.add-flow-group label {
-    color: var(--gray-500);
+.add-flow-group label, .label-section-subsystems {
+    position: relative;
+}
+
+.add-flow-group label::before, .label-section-subsystems::before {
+    content: '';
+    width: 3px;
+    height: 100%;
+    display: block;
+    border-radius: 5px;
+    position: absolute;
+    background-color: var(--accent-green);
+    left: -10px;
 }
 
 .year-select {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-
+    width: 200px;
     background-color: var(--white);
     border: 1.5px solid var(--gray-300);
     border-radius: var(--border-radius-sm);
@@ -133,13 +145,14 @@
 
 .btn-add-flow {
     display: flex;
+    text-decoration: none;
+    color: white;
     align-items: center;
     gap: 6px;
     padding: 10px 18px;
     border: none;
     border-radius: var(--border-radius-sm);
     background-color: var(--secondary-green);
-    color: var(--white);
     font-family: var(--font-family);
     font-size: var(--font-size-sm);
     font-weight: 600;
@@ -151,6 +164,8 @@
 .btn-add-flow:hover {
     background-color: var(--primary-green);
     box-shadow: var(--shadow-md);
+    color: white;
+    text-decoration: none;
     transform: translateY(-1px);
 }
 
@@ -215,6 +230,113 @@
     padding: 10px;
     text-align: center;
 }
+
+.card-flows > .assets {
+    position: relative;
+}
+
+.box-flowlist .card-duplicade {
+    padding: 30px 40px;
+    width: fit-content;
+    background-color: white;
+    border-radius: 10px;
+    border: 0;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.box-flowlist .card-duplicade .year-select {
+    width: 100%;
+}
+
+.box-flowlist .card-duplicade > div {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-duplicade > div .close-card {
+    position: absolute;
+    top: -20px;
+    right: -25px;
+}
+
+.card-duplicade > div .close-card:hover {
+    cursor: pointer;
+}
+
+.box-functions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.box-flowlist .active-box {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    width: max-content;
+    background-color: white;
+    top: -40px;
+    right: 35px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border-radius: 10px;
+    border: 0;
+}
+
+.box-flowlist .deactivate-box {
+    display: none;
+}
+
+.box-functions .deactive-duplicade {
+    display: none;
+}
+
+.more-flow-detail {
+    cursor: pointer;
+}
+
+.active-duplicade, .delete-flow {
+    display: block;
+    position: relative;
+    background-color: white;
+    border: 0;
+    width: 100%;
+    padding: 10px 12px;
+    color: black;
+    text-decoration: none;
+    border-radius: 10px;
+}
+
+.active-duplicade:hover {
+    background-color: var(--gray-200);
+    border-radius: 10px 10px 0 0;
+}
+
+ .delete-flow:hover {
+    background-color: var(--gray-200);
+    border-radius: 0 0 10px 10px;
+
+ }
+
+.active-duplicade::after {
+    content: '';
+    display: block;
+    width: 80%;
+    height: 1.5px;
+    z-index: 1;
+    position: absolute;
+    top: 100%;
+    background-color: var(--bs-gray-400);
+    border-radius: 10px;
+}
+
 
 @media (min-width: 717px) and (max-width: 1272px) {
     .flow-header {

@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from django.conf.urls.static import static
+from django.conf.urls.static import static as static_media
 from django.contrib.auth import views as auth_views
 from seapac.views import * 
 from usuarios.views import *
@@ -30,7 +30,10 @@ urlpatterns = [
     path("dashboard/", dashboard, name="dashboard"),
     # fluxo
     path("<str:id>/fluxo/<int:ano>/", flow, name="flow"),
-    path("<str:id>/adicionar-fluxo/<int:ano>/", new_subsystem_to_family, name="new_subsystem_to_family"),
+    path("<str:id>/adicionar-fluxo/", form_subsystem_to_family, name="form_subsystem_to_family"),
+    path("<str:id>/editar-subsistemas-fluxo/<int:ano>/", new_subsystem_to_family, name="new_subsystem_to_family"),
+    path("<str:id>/duplicar-fluxo/<int:ano>/<int:renda_ano>", duplicade_subsystem_to_family, name="duplicade_subsystem_to_family"),
+    path('<str:id>/deletar-fluxo/<int:ano>/', delete_subsystem_to_family, name='delete_subsystem_to_family'),
     path("<str:id>/lista-fluxos/", flow_list, name="flow_list"),
     # paineis
     path(
@@ -39,7 +42,7 @@ urlpatterns = [
         name="subsystem_panel",
     ),
     path(
-        "<str:family_id>/editar-painel-subsistema/<str:subsystem_id>/<int:renda_id>",
+        "<str:family_id>/editar-painel-subsistema/<str:subsystem_id>/<int:renda_id>/",
         edit_subsystem_panel,
         name="edit_subsystem_panel",
     ),
@@ -63,10 +66,12 @@ urlpatterns = [
     path("lista-tecnicos/detalhar/<int:pk>/", detail_tecs, name="detail_tecs"),
     path("lista-tecnicos/editar/<int:pk>/", edit_tecs, name="edit_tecs"),
     path("lista-tecnicos/deletar/<int:pk>/", delete_tecs, name="delete_tecs"),
+    path('listar_fluxos/', list_flows_agricultor, name='listar_fluxos'),
     #agricultores
     path('dashboard_agricultor/', dashboard_agricultores, name='dashboard_agricultor'),
-    path('listar_fluxos/', list_flows_agricultor, name='listar_fluxos'),
     path('<str:id>/fluxos_agricultor/<int:ano>/', flow_agricultor, name='fluxos_agricultor'),
+    path('<str:id>/renda_agricultor/<int:ano>/', renda_agricultor, name='renda_agricultor'),
+    path('<str:id>/detalhes_renda_agricultor/<int:ano>/', renda_details_agricultor, name='renda_details_agricultor'),
     # timeline
     path("<str:id>/timeline/", timeline, name="timeline"),
     path("<str:id>/timeline/novo/", add_timeline, name="add_timeline"),
@@ -99,4 +104,4 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static_media(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

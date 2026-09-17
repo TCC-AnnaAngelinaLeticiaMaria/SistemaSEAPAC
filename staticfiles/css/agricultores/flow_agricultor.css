@@ -1,0 +1,141 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Colors */
+    --primary-green: #2d5016;
+    --secondary-green: #4a7c59;
+    --accent-green: #6ab04c;
+    --light-green: #badc58;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --error: #e74c3c;
+    --info: #3498db;
+    
+    /* Neutrals */
+    --white: #ffffff;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    
+    /* Typography */
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
+    
+    /* Spacing */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    
+    /* Layout */
+    --sidebar-width: 280px;
+    --header-height: 72px;
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Transitions */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#cy {
+    width: 100%;
+    height: 750px;
+    background: #f8fbf4;
+    border-radius: 20px;
+}
+
+.produto-info {
+    display: none;
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    width: 280px;
+    max-width: calc(100vw - 60px);
+    padding: 24px;
+    background: #ffffff;
+    border: 2px solid #6ab04c;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+    z-index: 9999;
+}
+
+.produto-info.visivel {
+    display: block;
+}
+
+.produto-info h3 {
+    margin: 0 30px 18px 0;
+    color: #2d5016;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+#fechar-produto {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #555;
+    font-size: 28px;
+    line-height: 28px;
+    cursor: pointer;
+}
+
+#fechar-produto:hover {
+    background: #f0f0f0;
+}
+
+.fluxo-item {
+    padding: 12px 0;
+    border-top: 1px solid #e5e5e5;
+}
+
+.fluxo-item:first-child {
+    border-top: none;
+}
+
+.fluxo-item strong {
+    display: block;
+    margin-bottom: 4px;
+    color: black;
+    font-size: 17px;
+}
+
+.fluxo-item p {
+    margin: 0;
+    color: #555;
+    font-size: 16px;
+}
