@@ -1,0 +1,263 @@
+:root {
+    /* Colors */
+    --primary-green: #2d5016;
+    --secondary-green: #4a7c59;
+    --accent-green: #6ab04c;
+    --light-green: #badc58;
+    --more-light-green: #EBF6CB;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --error: #e74c3c;
+    --info: #3498db;
+    
+    /* Neutrals */
+    --white: #ffffff;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    
+    /* Typography */
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
+    
+    /* Spacing */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    
+    /* Layout */
+    --sidebar-width: 280px;
+    --header-height: 72px;
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Transitions */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Geral da página de renda */
+
+.flex {
+    display: flex;
+}
+
+.space-between{
+    display: flex;
+    justify-content: space-between;
+}
+
+.back-green {
+    background-color: var(--more-light-green);
+    margin: 0;
+    padding: 0.2rem;
+}
+
+.bold {
+    font-weight: 700;
+}
+
+
+/* Cards de resumo */
+
+.resumo-container {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.card-renda {
+    flex-basis: 90%;
+    margin: 2rem;
+    padding: 0;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.card-renda .green-font {
+    color: var(--secondary-green);
+    font-size: var(--font-size-2xl);
+}
+
+.card-renda .red-font {
+    color: var(--error);
+    font-size: var(--font-size-2xl);
+}
+
+.card-content {
+    margin: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.card-renda .cabecalho {
+    margin: 0 0 1rem 0;
+    padding: 0.8rem 1.5rem 0.8rem 1.5rem;    
+    border-radius: 24px 24px 0 0;
+}
+
+.card-renda .cabecalho h2 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: 0;
+}
+.card-renda .cabecalho p {
+    margin: 0 0 0.2rem 0;
+    padding: 0;
+    line-height: 1rem;
+}
+
+.card-renda .card-line .money{
+    font-size: var(--font-size-2xl);
+}
+
+.card-renda .text-muted {
+    line-height: 1.3rem;
+}
+
+.lucro-view {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0;
+    line-height: 2.5rem;
+    flex-grow: 1;
+}
+
+.divisoria {
+  width: 100%;
+  height: 2px;
+  background-color: #BADC58;
+  display: block;
+  margin: 1rem 0;
+}
+
+
+/* Tabelas */
+section.detalhamento-producao {
+    width: 100%;
+}
+
+.detalhamento-producao h2.title {
+    margin: 2rem 0 1rem;
+}
+
+.table {
+    --bs-table-border-color: transparent;
+    --bs-body-bg: transparent;
+    margin: 0;
+    padding: 0;
+    border-radius: 24px; 
+    text-align: center;
+    overflow: hidden;
+}
+
+.table, 
+.table .cabecalho, 
+.table td{
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+}
+
+.table > .cabecalho {
+    --bs-body-bg: #BADC58;
+    border-radius: 24px 24px 0 0;
+    height: 3.5rem;
+}
+
+.table > .cabecalho tr th {
+    position: relative;
+    border: none;
+    vertical-align: middle;
+    font-size: 0.9rem;
+    line-height: 1.2rem;
+}
+
+.table tbody tr td {
+    padding: 1rem 0.5rem;
+    max-width: 120px;
+    vertical-align: middle;
+}
+
+.table tbody tr:nth-of-type(odd){
+    background-color: #fff;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #F5F5F5;
+}
+
+/*  Tooltip customization */
+.btn.btn-tooltip {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+}
+
+.btn-tooltip .info-symbol {
+  font-size: var(--font-size-sm);
+}
+
+/* Responsive design */
+/* TELA MENORES - Atributos gerais */
+@media (max-width: 1024px) {
+    .resumo-container {
+        flex-direction: column;
+    }
+    
+    .table {
+        overflow: auto;
+        display: block;
+    }
+
+    .table > .cabecalho th {
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .card-renda .cabecalho {
+        margin: 0;
+    }
+    .card-content .card-line{
+        flex-direction: column;
+        margin: 0.5rem 0;
+        line-height: 2rem;
+    }
+
+    .card-content .money{
+        font-size: 1rem;
+    }
+
+    .table > .cabecalho th{
+        padding: 0.5rem 1rem;
+    }
+}
+
+
