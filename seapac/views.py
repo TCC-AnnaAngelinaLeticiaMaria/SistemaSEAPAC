@@ -42,8 +42,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles import finders
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.forms import formset_factory
-from django.http import FileResponse
-from django.http import JsonResponse
+from django.core.files.storage import default_storage
+from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse
 from django.views import View
@@ -651,8 +651,36 @@ def create_subsystems(request):
     if request.method == "POST":
         form = SubsystemForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return redirect("list_subsystems")
+            print("PRODUTOS RECEBIDOS:", form.cleaned_data.get('produtos_base'))
+
+            subsystem = form.save(commit=False)
+            produtos = form.cleaned_data.get('produtos_base', [])
+
+            novos_produtos = []
+
+            for produto in produtos:
+                indice_foto = produto.get('foto_indice')
+
+                foto = request.FILES.get(f'foto_produto_{indice_foto}')
+
+                produto_data = {
+                    'nome': produto['nome'],
+                    'fluxos': produto.get('fluxos', []),
+                    'foto': None
+                }
+
+                if foto:
+                    caminho = default_storage.save(
+                       f'subsystem_products/{foto.name}',
+                       foto
+                    )
+                    produto_data['foto'] = caminho
+
+                novos_produtos.append(produto_data)
+
+            subsystem.produtos_base = novos_produtos
+            subsystem.save()
+            return redirect('list_subsystems')
     else:
         form = SubsystemForm()
 
@@ -1022,7 +1050,7 @@ def duplicade_subsystem_to_family(request, id, ano, renda_ano):
         'family': family,
         'anos': range(1993, current_year+1),
         'rendas': rendas,
-        'title': 'Fuxogramas da'
+        'title': 'Fluxogramas da'
     })
 
 @never_cache
@@ -1413,7 +1441,9 @@ def flow_agricultor(request, id, ano):
     for f in family_subsistema:
         subsystem = f.subsystem
 
-        if subsystem.id == 1:
+        if subsystem.has_valid_photo():
+            imagem_subsistema = subsystem.get_photo_url()
+        elif subsystem.id == 1:
             imagem_subsistema = static(
                 FOTO_SUBSYS.get('UFPA')
             )
@@ -1460,12 +1490,17 @@ def flow_agricultor(request, id, ano):
                 f'produto_{subsystem.id}_{produto_count}'
             )
 
-            imagem_produto = static(
-                FOTOS_PRODUTOS.get(
-                    nome_p,
-                    'img/subsystem_products/sem_imagem.svg'
+            foto_produto = produto.get('foto')
+
+            if foto_produto:
+                imagem_produto = settings.MEDIA_URL + foto_produto
+            else:
+                imagem_produto = static(
+                    FOTOS_PRODUTOS.get(
+                        nome_p,
+                        'img/subsystem_products/sem_imagem.svg'
+                    )
                 )
-            )
 
             nodes.append({
                 'data': {

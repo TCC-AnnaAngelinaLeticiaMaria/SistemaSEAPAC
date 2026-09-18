@@ -331,14 +331,7 @@ class BaseFluxoFormSet(BaseFormSet):
 class SubsystemForm(ModelForm):
     produtos_base = forms.CharField(
         required=False,
-        widget=forms.Textarea(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Digite um produto por linha:\nCarne\nLeite\nEsterco",
-                "rows": 5,
-            }
-        ),
-        label="Produtos Base",
+        widget=forms.HiddenInput(),
     )
     foto_subsistema = forms.ImageField(
         required=False,
@@ -385,19 +378,22 @@ class SubsystemForm(ModelForm):
 
     def clean_produtos_base(self):
         data = self.cleaned_data.get("produtos_base", "")
-        if isinstance(data, str) and data.strip().startswith("["):
-            try:
-                parsed = json.loads(data)
-                if isinstance(parsed, list):
-                    return parsed
-            except json.JSONDecodeError:
-                raise forms.ValidationError(
-                    "JSON inválido. Use uma lista ou uma linha por produto."
-                )
-        linhas = [linha.strip() for linha in str(data).splitlines() if linha.strip()]
-        produtos = [{"nome": linha, "fluxos": []} for linha in linhas]
-        return produtos
 
+        if not data:
+            return []
+
+        try:
+            parsed = json.loads(data)
+            if not isinstance(parsed, list):
+                raise forms.ValidationError(
+                    'Os produtos devem estar em formato de lista'
+                )
+            return parsed
+        
+        except json.JSONDecodeError:
+            raise forms.ValidationError(
+                "JSON inválido. Use uma lista ou uma linha por produto."
+            )
 
 class SubsystemEditForm(SubsystemForm):
 

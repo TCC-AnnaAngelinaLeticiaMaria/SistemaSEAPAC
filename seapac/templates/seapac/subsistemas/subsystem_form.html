@@ -1,6 +1,77 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/formflow.css' %}">
+
+{% endblock extra_head %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+
+    const container = document.getElementById('produtos-container');
+    const btnAdicionar = document.getElementById('btn-adicionar-produto');
+    const produtosInput = document.getElementById('id_produtos_base');
+
+    function adicionarProduto(nome='', indice = null) {
+
+        if (indice === null) {
+            indice = document.querySelectorAll('.produto-item').length;
+        }
+
+        const produto = document.createElement('div');
+
+        produto.classList.add('produto-item');
+
+        produto.innerHTML = 
+            `<div class='produto-campos'>
+                <input type="text" class="form-control produto-nome" placeholder="Nome do Produto" value="${nome}">
+                <small class='info-image-product'>Insira uma imagem formato <strong>.svg</strong></small>
+                <input type="file" name='foto_produto_${indice}' class="form-control produto-foto" accept=".svg, .png">
+            </div>
+
+                <button type="button" class="btn btn-danger btn-remover-produto">Remover</button>`;
+        
+        container.appendChild(produto)
+
+        produto.querySelector('.btn-remover-produto').addEventListener('click', function () {
+            produto.remove();
+            atualizarProdutos();
+        })
+        produto.querySelector('.produto-nome').addEventListener('input', atualizarProdutos);
+    }
+
+    function atualizarProdutos() {
+        const produtos = []
+
+        document.querySelectorAll('.produto-item').forEach(element => {
+            const nome = element.querySelector('.produto-nome').value.trim();
+            const indiceFoto = element.querySelector('.produto-foto').name.replace('foto_produto_', '')
+
+            if (nome) {
+                produtos.push({
+                    nome: nome,
+                    foto_indice: indiceFoto,
+                    fluxos: []
+                });
+            }
+        });
+        produtosInput.value = JSON.stringify(produtos);
+    }
+
+    btnAdicionar.addEventListener(
+        'click', function () {
+            adicionarProduto();
+        }
+    );
+
+    adicionarProduto()
+
+</script>
+{% endblock extra_js %}
+
 {% block center %}
 
 <div class="container py-4" style="max-width: 850px;">
@@ -65,11 +136,15 @@
             <br>
 
             <h5 class="text-success border-bottom pb-2 mb-4">Informações sobre o Produtos</h5>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <label class="form-label">Produtos Base</label>
-                    {{ form.produtos_base }}
-                </div>
+
+            <div form-group-products>
+                <p>Produtos Base</p>
+
+                {{ form.produtos_base }}
+
+                <div id="produtos-container"></div>
+
+                <button type="button" id="btn-adicionar-produto" class="btn btn-success">+ Adicionar produto</button>
             </div>
 
             <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
