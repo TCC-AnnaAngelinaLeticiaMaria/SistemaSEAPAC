@@ -426,8 +426,6 @@ def renda_familiar_detail(request, id, ano):
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
     resultado = renda.calcular_renda()
 
-    diferenca = resultado["renda_total_potencial"] - resultado["renda_total"]
-
     context = {
         "family": family,
         "ano": ano,
@@ -438,7 +436,7 @@ def renda_familiar_detail(request, id, ano):
         "total_receita_potencial": resultado["total_receita_potencial"],
         "renda_total_potencial": resultado["renda_total_potencial"],
         "title": f"Renda da ",
-        "diferenca": diferenca,
+        "diferenca": resultado["diferenca"],
     }
     return render(request, "seapac/familias/renda_familiar_detail.html", context)
     
@@ -1361,7 +1359,6 @@ def pdf_timeline(request, id):
 @group_required('AGRICULTORES')
 def dashboard_agricultores(request):
     family = get_object_or_404(Family, agricultor=request.user)
-    
     context = {
         "title": "Página Inicial",
         "family": family,
@@ -1385,6 +1382,7 @@ def list_flows_agricultor(request):
 @never_cache
 @login_required
 @group_required('AGRICULTORES')
+
 def renda_agricultor(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -1583,15 +1581,41 @@ def flow_agricultor(request, id, ano):
                         }
                     })
 
-    
-    context = {
-        "fluxo": {
-            "nodes": nodes,
-            "edges": edges,
-        },
-        "title": f"Fluxo de {family.nome_titular} - {ano}",
-        'family': family
-    }
-    return render(request, "seapac/agricultores/flow_agricultor.html", context)
+@never_cache
+@login_required
+@group_required('AGRICULTORES')
+def renda_agricultor(request, id, ano):
+    family = get_object_or_404(Family, id=id)
+    renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    resultado = renda.calcular_renda()
 
+    context = {
+        "family": family,
+        "ano": ano,
+        "total_receita": resultado["total_receita"],
+        "total_custo": resultado["total_custo"],
+        "renda_total": resultado["renda_total"],
+        "total_receita_potencial": resultado["total_receita_potencial"],
+        "renda_total_potencial": resultado["renda_total_potencial"],
+        "title": f"Renda da ",
+        "diferenca": resultado["diferenca"],
+    }
+    return render(request, "seapac/agricultores/renda_agricultor.html", context)
+
+
+@never_cache
+@login_required
+@group_required('AGRICULTORES')
+def renda_details_agricultor(request, id, ano):
+    family = get_object_or_404(Family, id=id)
+    renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    resultado = renda.calcular_renda()
+
+    context = {
+        "family": family,
+        "ano": ano,
+        "produtos": resultado["produtos"],
+        "title": f"Detalhamento da renda ",
+    }
+    return render(request, "seapac/agricultores/renda_details_agricultor.html", context)
 

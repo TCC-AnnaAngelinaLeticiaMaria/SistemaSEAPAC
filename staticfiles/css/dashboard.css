@@ -615,6 +615,16 @@ body {
     border: 0;
 }
 
+/*  The icon for tooltip - info sign */
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
+
+
 /* Responsive Design */
 @media (max-width: 1292px) {
     .container-forms {
@@ -623,12 +633,6 @@ body {
     .box-save-cancel {
         position: static !important;
         margin-left: 16px !important;
-    }
-}
-
-@media (max-width: 1512px) {
-    .family-actions p {
-        display: none;
     }
 }
 
