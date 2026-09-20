@@ -19,10 +19,12 @@
         <h1 class='title'>{% block title %}{{ title }}{% endblock title %}</h1>
         <h2 class="name-family">{{ family.get_nome_familia }}</h2>
     </div>
-    <div class='search-timeline'>
-        <a href="{% url 'add_timeline' family.id %}" class="btn btn-primary">+ Adicionar Marco Histórico</a>
-        <a href="{% url 'pdf_timeline' family.id %}" class="btn btn-primary">Gerar PDF</a>
-    </div>
+    {% if not user.is_agricultor %}
+        <div class='search-timeline'>
+            <a href="{% url 'add_timeline' family.id %}" class="btn btn-primary">+ Adicionar Marco Histórico</a>
+            <a href="{% url 'pdf_timeline' family.id %}" class="btn btn-primary">Gerar PDF</a>
+        </div>
+    {% endif %}
     {% if events %}
         <div class="sandbox" id="sandbox">
 
@@ -47,7 +49,7 @@
                     {% if evento.secao == 'mundo-interno' %}
 
                     <div class="timeline-event event-left">
-                        {% if user.is_administrador %}
+                        {% if not user.is_agricultor %}
                             <div class="buttons-timeline edit-event-out-left">
 
                                 <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)">
@@ -69,25 +71,27 @@
                             <p>{{ evento.descricao }}</p>
                         </div>
 
-                        <div class="buttons-timeline">
-                            <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)" class="delete-event">
-                                {% csrf_token %}
-                                <button type="submit" class="delete-btn">
-                                    <span class="material-symbols-outlined">delete</span>
-                                </button>
-                            </form>
-                            
-                            <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
-                                <span class="material-symbols-outlined">edit</span>
-                            </a>
-                        </div>
+                        {% if not user.is_agricultor %}
+                            <div class="buttons-timeline">
+                                <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)" class="delete-event">
+                                    {% csrf_token %}
+                                    <button type="submit" class="delete-btn">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </form>
+                                
+                                <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </a>
+                            </div>
+                        {% endif %}
 
                     </div>
 
                     {% else %}
 
                     <div class="timeline-event event-right">
-                        {% if user.is_administrador %}
+                        {% if not user.is_agricultor %}
                             <div class="buttons-timeline edit-event-out-right">
                                 <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)">
                                     {% csrf_token %}
@@ -108,18 +112,20 @@
                             <p>{{ evento.descricao }}</p>
                         </div>
 
-                        <div class="buttons-timeline">
-                            <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)" class="delete-event">
-                                {% csrf_token %}
-                                <button type="submit" class="delete-btn">
-                                    <span class="material-symbols-outlined">delete</span>
-                                </button>
-                            </form>
+                        {% if not user.is_agricultor %}
+                            <div class="buttons-timeline">
+                                <form action="{% url 'delete_timeline' family.id evento.id %}" method="post" onsubmit="return confirmDelete(event, this)" class="delete-event">
+                                    {% csrf_token %}
+                                    <button type="submit" class="delete-btn">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </form>
 
-                            <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
-                                <span class="material-symbols-outlined">edit</span>
-                            </a>
-                        </div>
+                                <a href="{% url 'edit_timeline' family.id evento.id %}" class="edit-event">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </a>
+                            </div>
+                        {% endif %}
 
                     </div>
 
@@ -134,16 +140,6 @@
         </div>
     {% endif %}
 </div>
-
-<!--
-<div class="sandbox" id="sandbox">
-    {% load mermaid %}
-    {% startmermaid %}
-        {{ conteudo_mermaid|safe }}
-    {% endmermaid %}
-</div>
--->
-
 
 
 {% endblock %}

@@ -1580,6 +1580,22 @@ def flow_agricultor(request, id, ano):
                             'tipo': 'fluxo',
                         }
                     })
+    context = {
+        "fluxo": {
+            "nodes": nodes,
+            "edges": edges,
+        },
+        "title": (
+            f"Fluxo de "
+            f"{family.nome_titular} - {ano}"
+        ),
+        "family": family,
+    }
+    return render(
+        request,
+        "seapac/agricultores/flow_agricultor.html",
+        context
+    )
 
 @never_cache
 @login_required
@@ -1588,6 +1604,22 @@ def renda_agricultor(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
     resultado = renda.calcular_renda()
+
+    renda_total = resultado["renda_total"]
+    renda_potencial = resultado["renda_total_potencial"]
+    
+    renda_total = renda_total.replace('.', '').replace(',','.')
+    renda_potencial = renda_potencial.replace('.', '').replace(',','.')
+
+    color_result = "var(--secondary-green)"
+
+    if float(renda_total) < 0:
+        color_result="var(--error)"
+
+    color_result_potencial = "var(--secondary-green)"
+    if float(renda_potencial) < 0:
+        color_result_potencial="var(--error)"
+
 
     context = {
         "family": family,
@@ -1599,6 +1631,9 @@ def renda_agricultor(request, id, ano):
         "renda_total_potencial": resultado["renda_total_potencial"],
         "title": f"Renda da ",
         "diferenca": resultado["diferenca"],
+        "color_result": color_result,
+        "color_result_potencial":color_result_potencial,
+
     }
     return render(request, "seapac/agricultores/renda_agricultor.html", context)
 
@@ -1615,7 +1650,55 @@ def renda_details_agricultor(request, id, ano):
         "family": family,
         "ano": ano,
         "produtos": resultado["produtos"],
-        "title": f"Detalhamento da renda ",
+        "title": f"Detalhamento da renda da",
     }
     return render(request, "seapac/agricultores/renda_details_agricultor.html", context)
 
+@never_cache
+@login_required
+@group_required('AGRICULTORES')
+def subsystems_agricultor(request):
+    family = get_object_or_404(Family, agricultor=request.user)
+    rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
+
+    rendas_lista = list(rendas)
+    print(f"rendas_lista: \n{rendas_lista}")
+    ano_recente = rendas_lista[0].ano
+    print(f"\nano mais recente selecionado: \n{ano_recente}")
+
+
+    family_subsystems = FamilySubsystem.objects.filter(
+            family_renda=FamilyRenda.objects.filter(family=family, ano=ano_recente)[:1]
+        ).select_related(
+        "subsystem"
+    )
+
+    print(f'\nfamily_subsystems:\n{family_subsystems}')
+
+    subsystems_data = []
+    for family_subsystem in family_subsystems:
+        subsystems_data.append({
+            "id": family_subsystem.subsystem.id,
+            "nome_subsistema": family_subsystem.subsystem.nome_subsistema,
+            "tipo": family_subsystem.subsystem.tipo,
+        })
+
+    print(f"\nsubsystems_data: \n{subsystems_data}")
+    
+    context = {
+        'family':family,
+        'subsystems':subsystems_data,
+        'ano':ano_recente,
+        'title': "Meus subsistemas",
+    }
+    return render(request, "seapac/agricultores/subsistemas_agricultor.html", context)
+
+
+@never_cache
+@login_required
+@group_required('AGRICULTORES')
+def timeline_agricultor(request, agricultor_id):
+    user_agricultor = get_object_or_404(Agricultor, id=agricultor_id)
+    family_agricultor = get_object_or_404(Family, agricultor=user_agricultor)
+
+    return redirect('timeline', id=family_agricultor.id)
