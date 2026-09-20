@@ -20,8 +20,10 @@
         <h2 class="name-family">{{ family.get_nome_familia }}</h2>
     </div>
     <div class='search-timeline'>
-        <a href="{% url 'add_timeline' family.id %}" class="btn btn-primary">+ Adicionar Marco Histórico</a>
-        <a href="{% url 'pdf_timeline' family.id %}" class="btn btn-primary">Gerar PDF</a>
+        {% if user.is_administrador %}
+            <a href="{% url 'add_timeline' family.id %}" class="btn btn-primary">+ Adicionar Marco Histórico</a>
+            <a href="{% url 'pdf_timeline' family.id %}" class="btn btn-primary">Gerar PDF</a>
+        {% endif %}
     </div>
     {% if events %}
         <div class="sandbox" id="sandbox">

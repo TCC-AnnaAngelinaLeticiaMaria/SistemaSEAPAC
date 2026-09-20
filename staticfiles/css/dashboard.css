@@ -584,7 +584,8 @@ body {
     border-radius: 4px;
 }
 
-.no-families {
+.no-families, 
+.no-object {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -594,20 +595,23 @@ body {
     color: var(--gray-500);
 }
 
-.no-families i {
+.no-families i, 
+.no-object i {
     font-size: var(--font-size-4xl);
     margin-bottom: var(--space-4);
     color: var(--gray-400);
 }
 
-.no-families h3 {
+.no-families h3, 
+.no-object h3{
     font-size: var(--font-size-xl);
     font-weight: 600;
     color: var(--gray-600);
     margin-bottom: var(--space-2);
 }
 
-.no-families p {
+.no-families p, 
+.no-object p {
     color: var(--gray-500);
 }
 
