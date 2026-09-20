@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
 
@@ -29,12 +28,14 @@ services:
     volumes:
       - media_data:/app/media
       - static_data:/app/static
+    ports:
+      - "82:80"
     environment:
       VIRTUAL_HOST: seapac.nadic.ifrn.edu.br
       VIRTUAL_POST: 80
       LETSENCRYPT_HOST: seapac.nadic.ifrn.edu.br
     networks:
-      - web-proxy
+#      - web-proxy
       - default
     restart: unless-stopped
   
@@ -43,7 +44,7 @@ volumes:
   media_data:
   static_data:
 
-networks:
-  web-proxy:
-   external: true
+#networks:
+#  web-proxy:
+#   external: true
   

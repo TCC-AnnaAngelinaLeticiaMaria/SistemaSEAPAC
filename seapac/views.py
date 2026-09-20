@@ -1580,6 +1580,22 @@ def flow_agricultor(request, id, ano):
                             'tipo': 'fluxo',
                         }
                     })
+    context = {
+        "fluxo": {
+            "nodes": nodes,
+            "edges": edges,
+        },
+        "title": (
+            f"Fluxo de "
+            f"{family.nome_titular} - {ano}"
+        ),
+        "family": family,
+    }
+    return render(
+        request,
+        "seapac/agricultores/flow_agricultor.html",
+        context
+    )
 
 @never_cache
 @login_required

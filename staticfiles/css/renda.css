@@ -232,7 +232,8 @@ section.detalhamento-producao {
 .agricultor-page .icon{
     font-size: var(--font-size-4xl);
     position: relative;
-    top: 4px;
+    top: 10px;
+    left: -5px;
 }
 
 .agricultor-page .lucro-view .card-line {
