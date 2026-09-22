@@ -34,6 +34,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import render_to_string
 from django.utils.dateparse import parse_datetime
 from .reports.pdf import gerar_relatorio_family
 from django.core.paginator import Paginator
@@ -54,6 +55,7 @@ import unicodedata
 import secrets
 import openpyxl
 import re
+import time
 
 import json
 
@@ -363,7 +365,7 @@ def renda_familiar_detail(request, id, ano):
         "diferenca": resultado["diferenca"],
     }
     return render(request, "seapac/familias/renda_familiar_detail.html", context)
-    
+
 # --------------CRUD PROJETOS (COMPLETO)------------------
 @never_cache
 @login_required
@@ -798,7 +800,7 @@ def flow_list(request, id):
     family = get_object_or_404(Family, id=id)
     rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
     
-    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'anos': range(1993, current_year+1), 'title': 'Fuxogramas da'})
+    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'anos': range(1993, current_year+1), 'title': 'Fluxogramas da'})
 
 @never_cache
 @login_required
@@ -1122,7 +1124,7 @@ def pdf_timeline(request, id):
     eventos = TimelineEvent.objects.filter(family=family).order_by("data", "id")
 
     html_txt = render(request, 'seapac/timeline/pdf_timeline.html', {'family': family, 'events': eventos}).content.decode("utf-8")
-    css_path = finders.find('css/timeline_pdf.css')
+    css_path = finders.find('css/pdfs/timeline_pdf.css')
     pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
 
     response = HttpResponse(
@@ -1133,6 +1135,42 @@ def pdf_timeline(request, id):
         f'attachment; filename="timeline{family.nome_titular}.pdf"'
     )
 
+    return response
+
+
+@login_required
+@group_required('TECNICOS')
+def pdf_renda(request, id, ano):
+    family = get_object_or_404(Family, id=id)
+    renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    resultado = renda.calcular_renda()
+
+    contexto = {
+        "family": family,
+        "ano": ano,
+        "produtos": resultado["produtos"],
+        "total_receita": resultado["total_receita"],
+        "total_custo": resultado["total_custo"],
+        "renda_total": resultado["renda_total"],
+        "total_receita_potencial": resultado["total_receita_potencial"],
+        "renda_total_potencial": resultado["renda_total_potencial"],
+        "title": f"Renda da ",
+        "diferenca": resultado["diferenca"],
+    }
+
+    html_txt = render_to_string("seapac/pdfs/pdf_renda.html", contexto, request=request,)
+    css_path = finders.find('css/pdfs/renda_pdf.css')
+    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
+
+    from django.utils.text import slugify
+    nome = slugify(family.nome_titular)
+    response = HttpResponse(
+        pdf,
+        content_type='application/pdf',
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="renda--{nome}--{ano}.pdf"'
+    )
     return response
 
 #------------------------------------------------------------------------

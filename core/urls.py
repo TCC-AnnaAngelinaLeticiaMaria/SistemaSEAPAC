@@ -50,6 +50,7 @@ urlpatterns = [
     path("lista-familias/", list_families, name="list_families"),
     path("<str:id>/visualizar-familia/", detail_family, name="detail_family"),
     path("<str:id>visualizar-familia/deletar", delete_family, name="delete_family"),
+    # renda
     path("<str:id>/renda_familiar/<int:ano>", renda_familiar_detail, name="renda_familiar_detail"),
     # projetos
     path("lista-projetos/", list_projects, name="list_projects"),
@@ -81,7 +82,6 @@ urlpatterns = [
     path(
         "<str:id>/timeline/buscar/", search_timeline_event, name="search_timeline_event"
     ),
-    path("<str:id>/timeline/gerar_pdf", pdf_timeline, name="pdf_timeline"),
     # subsistemas
     path("lista-subsistemas/", list_subsystems, name="list_subsystems"),
     path(
@@ -98,8 +98,10 @@ urlpatterns = [
     ),
     # usuários e recuperação de senha
     path("usuarios/", include("usuarios.urls")),
-    # geração de relatórios
+    # pdf e geração de relatórios
     path("familia/<int:id>/relatorio/", relatorio_family_pdf, name="relatorio_family"),
+    path("<str:id>/timeline/gerar_pdf", pdf_timeline, name="pdf_timeline"),
+    path("<str:id>/renda/gerar_pdf/<int:ano>", pdf_renda, name="pdf_renda"),
 ]
 
 if settings.DEBUG:

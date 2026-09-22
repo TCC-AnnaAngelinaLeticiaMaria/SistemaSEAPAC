@@ -11,10 +11,12 @@
     <span class="material-symbols-outlined">arrow_back</span>
     Voltar
 </a>
-
-<h1 class='title'>
-    {% block title %}{{ title }}{% endblock title %} {{ family.get_nome_familia }} - {{ ano }}
-</h1>
+<div class="renda-header">
+    <h1 class='title'>
+        {% block title %}{{ title }} {{ family.get_nome_familia }} - {{ ano }}{% endblock title %}
+    </h1>
+    <a href="{% url 'pdf_renda' family.id ano %}" class="btn btn-primary">Gerar PDF</a>
+</div>
 
 <section class="flex resumo-container">
     

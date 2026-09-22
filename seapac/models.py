@@ -177,7 +177,7 @@ class FamilyRenda(models.Model):
                 valor_unitario = receita_real / qtd_vendida if qtd_vendida else 0
                 receita_real = valor_unitario * qtd_vendida
                 lucro_real = receita_real - custo_total
-                print(f"\nValor_unitario: {valor_unitario}\nValor_potencial: {valor_potencial}\nqtd_vendida: {qtd_vendida}\nqtd_nao_vendida: {qtd_nao_vendida}\nqtd_total: {qtd_total}")
+
                 receita_nao_monetaria = dados["valor_potencial"] * qtd_nao_vendida
 
                 receita_potencial = receita_nao_monetaria + (valor_unitario * qtd_vendida)
@@ -210,7 +210,6 @@ class FamilyRenda(models.Model):
                 total_custo += custo_total
                 renda_total += lucro_real
                 total_receita_potencial += receita_potencial
-                print(f"Total da receita potencial: {total_receita_potencial}")
                 renda_total_potencial += lucro_potencial
 
         diferenca = renda_total_potencial - renda_total

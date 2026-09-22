@@ -59,15 +59,21 @@
     --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Geral da página de renda */
 
-.flex {
-    display: flex;
+@page{
+    size: A4 landscape;
+    margin: 1.5cm;
+
+    @bottom-right {
+        content: "Página " counter(page);
+        font-size: 9pt;
+    }
 }
 
-.space-between{
-    display: flex;
-    justify-content: space-between;
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #1e293b;
 }
 
 .back-green {
@@ -80,32 +86,14 @@
     font-weight: 700;
 }
 
-/* "Cabeçalho" */
-.renda-header {
-    display: flex;
-    justify-content: space-between;
-}
-
-.renda-header .btn {
-    display: block;
-    height: fit-content;
-    width: fit-content;
-}
 
 /* Cards de resumo */
-
-.resumo-container {
-    display: flex;
-    justify-content: space-evenly;
-}
-
 .card-renda {
-    flex-basis: 90%;
+    width: 90%;
     margin: 2rem;
     padding: 0;
     border-radius: 24px;
-    display: flex;
-    flex-direction: column;
+    border: solid 1px var(--gray-400);
 }
 
 
@@ -121,9 +109,6 @@
 
 .card-content {
     margin: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
 }
 
 .card-renda .cabecalho {
@@ -143,17 +128,16 @@
 }
 
 .card-renda .card-line .money{
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-lg);
 }
 
 .card-renda .text-muted {
-    line-height: 1.3rem;
+    margin: 0;
+    padding: 0;
+    line-height: 1rem;
 }
 
 .lucro-view {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
     padding: 0;
     line-height: 2.5rem;
     flex-grow: 1;
@@ -171,9 +155,11 @@
 /* Tabelas */
 section.detalhamento-producao {
     width: 100%;
+    break-before: page;
 }
 
 .detalhamento-producao h2.title {
+    font-size: var(--font-size-2x1);
     margin: 2rem 0 1rem;
 }
 
@@ -184,7 +170,15 @@ section.detalhamento-producao {
     padding: 0;
     border-radius: 24px; 
     text-align: center;
-    overflow: hidden;
+    width: 100%;
+}
+
+.table thead {
+    display: table-header-group;
+}
+
+.table tr{
+    break-inside: avoid ;
 }
 
 .table, 
@@ -208,12 +202,19 @@ section.detalhamento-producao {
     vertical-align: middle;
     font-size: 0.9rem;
     line-height: 1.2rem;
+    font-size: 10pt;
+    text-overflow: ellipsis;
+}
+
+.table th  small{
+    font-size: 10px;
 }
 
 .table tbody tr td {
     padding: 1rem 0.5rem;
     max-width: 120px;
     vertical-align: middle;
+    font-size: 12pt;
 }
 
 .table tbody tr:nth-of-type(odd){
@@ -223,72 +224,3 @@ section.detalhamento-producao {
 .table tbody tr:nth-child(even) {
     background-color: #F5F5F5;
 }
-
-/*  Tooltip customization */
-.btn.btn-tooltip {
-  position: absolute;
-  padding: 0;
-  margin: 0;
-}
-
-.btn-tooltip .info-symbol {
-  font-size: var(--font-size-sm);
-}
-
-/* EXCLUSIVO - Agricultor */
-.resumo-container.agricultor-page {
-    display: block;
-}
-
-.agricultor-page .icon{
-    font-size: var(--font-size-4xl);
-    position: relative;
-    top: 4px;
-}
-
-.agricultor-page .lucro-view .card-line {
-  font-size: var(--font-size-xl);
-}
-
-#btn-details-renda {
-  display: block;
-  width: fit-content;
-}
-
-/* Responsive design */
-/* TELA MENORES - Atributos gerais */
-@media (max-width: 1024px) {
-    .resumo-container {
-        flex-direction: column;
-    }
-    
-    .table {
-        overflow: auto;
-        display: block;
-    }
-
-    .table > .cabecalho th {
-        padding: 0.5rem 1rem;
-    }
-}
-
-@media (max-width: 600px) {
-    .card-renda .cabecalho {
-        margin: 0;
-    }
-    .card-content .card-line{
-        flex-direction: column;
-        margin: 0.5rem 0;
-        line-height: 2rem;
-    }
-
-    .card-content .money{
-        font-size: 1rem;
-    }
-
-    .table > .cabecalho th{
-        padding: 0.5rem 1rem;
-    }
-}
-
-

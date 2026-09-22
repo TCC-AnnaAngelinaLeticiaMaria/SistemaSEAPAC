@@ -1,0 +1,146 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF da renda da família</title>
+    <link rel="stylesheet" href="{% static 'css/pdfs/renda_pdf.css' %}">
+</head>
+<body>
+        
+    <h1 class='title'>
+        {{ title }} {{ family.get_nome_familia }} - {{ ano }}
+    </h1>
+
+    <section class="resumo-container">
+        
+        <div class="card-renda shadow">
+            <div class="cabecalho back-green">
+                <h2><strong>Valores Reais</strong></h2>
+                <p>(apenas monetário)</p>
+            </div>
+            <div class="card-content">
+                <div class="card-line space-between">
+                    <span>Receita:</span>
+                    <span class="green-font bold money">R$ {{ total_receita }}</span>
+                </div>
+                <div class="card-line space-between">
+                    <span>Custo total:</span>
+                    <span class="red-font bold money">R$ {{ total_custo }}</span>
+                </div>
+                <div class="lucro-view">
+                    <div class="card-line space-between bold">
+                        <span>Lucro líquido:</span>
+                        <span  class="money">R$ {{ renda_total }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-renda shadow">
+            <div class="cabecalho back-green">
+                <h2><strong>Valores Potenciais</strong></h2>
+                <p>(monetário + não monetário)</p>
+            </div>
+            <div class="card-content">
+                <div class="card-line space-between">
+                    <span>Receita potencial:</span>
+                    <span class="green-font bold money">R$ {{ total_receita_potencial }}</span>
+                </div>
+                <div class="card-line space-between">
+                    <span>Custo total:</span>
+                    <span class="red-font bold money">R$ {{ total_custo }}</span>
+                </div>
+                <div class="lucro-view">
+                    <div class="card-line space-between bold">
+                        <span>Lucro potencial:</span>
+                        <span class="money">R$ {{ renda_total_potencial }}</span>
+                    </div>
+                    <p class="text-muted">
+                        Diferença de <strong>R$ {{ diferenca }}</strong> entre o valor real e o potencial.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="detalhamento-producao">
+        
+        <h2 class="title">Do que foi vendido (valores monetários)</h2>
+        <table class="table shadow">
+            <thead class="cabecalho back-green">
+                <tr>
+                    <th>Subsistema</th>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Unidade</th>
+                    <th>Custo Unitário (R$)</th>
+                    <th>Valor Unitário (R$)</th>
+                    <th>Custo Total (R$)</th>
+                    <th>Receita (R$)</th>
+                    <th>Lucro (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in produtos  %}
+                {% if p.qtd != 0 %}
+                    {% if p.valor and p.valor != '0,00' %}
+                    <tr>
+                        <td>{{ p.subsistema }}</td>
+                        <td>{{ p.produto }}</td>
+                        <td>{{ p.qtd_vendida }}</td>
+                        <td>{{ p.unidade }}</td>
+                        <td>{{ p.custo }}</td>
+                        <td>{{ p.valor }}</td>
+                        <td>{{ p.custo_vendido }}</td>
+                        <td>{{ p.receita }}</td>
+                        <td><strong>{{ p.lucro }}</strong></td>
+                    </tr>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+        
+        
+        <h2 class="title">Do que foi produzido, mas não vendido (valores não monetários)</h2>
+        <table class="table shadow">
+            <thead class="cabecalho back-green">
+                <tr>
+                    <th>Subsistema</th>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Unidade</th>
+                    <th>Custo Unitário (R$)</th>
+                    <th>Valor Unitário (R$)<br><small>Não monetário</small></th>
+                    <th>Custo Total (R$)</th>
+                    <th>Receita (R$)<br><small>Não monetário</small></th>
+                    <th>Lucro (R$)<br><small>Não monetário</small></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in produtos  %}
+                {% if p.qtd != 0 %}
+                    {% if p.valor_potencial != '0,00' %}
+                    <tr>
+                        <td>{{ p.subsistema }}</td>
+                        <td>{{ p.produto }}</td>
+                        <td>{{ p.qtd_naovendida }}</td>
+                        <td>{{ p.unidade }}</td>
+                        <td>{{ p.custo }}</td>
+                        <td>{{ p.valor_potencial }}</td>
+                        <td>{{ p.custo_nao_vendido }}</td>
+                        <td>{{ p.receita_potencial }}</td>
+                        <td><strong>{{ p.lucro_potencial }}</strong></td>
+                    </tr>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</body>
+</html>
