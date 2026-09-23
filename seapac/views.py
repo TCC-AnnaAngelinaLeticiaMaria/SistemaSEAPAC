@@ -42,6 +42,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.staticfiles import finders
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.forms import formset_factory
+from django.core.files.base import ContentFile
+from .utils.svg_converter import converter_svg
 from django.core.files.storage import default_storage
 from django.conf import settings
 from django.contrib import messages
@@ -54,6 +56,7 @@ import unicodedata
 import secrets
 import openpyxl
 import re
+import os
 
 FOTOS_PRODUTOS = {
     "Carne": 'img/subsystem_products/carne.svg',
@@ -641,7 +644,6 @@ def detail_subsystems(request, id):
     context = {"subsistema": subsistema, "title": "Detalhes do Subsistema"}
     return render(request, "seapac/subsistemas/subsystem_detail.html", context)
 
-
 @never_cache
 @login_required
 @group_required('TECNICOS')
@@ -649,7 +651,6 @@ def create_subsystems(request):
     if request.method == "POST":
         form = SubsystemForm(request.POST, request.FILES)
         if form.is_valid():
-            print("PRODUTOS RECEBIDOS:", form.cleaned_data.get('produtos_base'))
 
             subsystem = form.save(commit=False)
             produtos = form.cleaned_data.get('produtos_base', [])
@@ -668,10 +669,14 @@ def create_subsystems(request):
                 }
 
                 if foto:
+                    svg = converter_svg(foto)
+
+                    nome_foto = os.path.splitext(foto.name)[0]
                     caminho = default_storage.save(
-                       f'subsystem_products/{foto.name}',
-                       foto
+                       f'subsystem_products/{nome_foto}.svg',
+                       ContentFile(svg.encode("utf-8"))
                     )
+
                     produto_data['foto'] = caminho
 
                 novos_produtos.append(produto_data)
@@ -696,14 +701,55 @@ def edit_subsystems(request, id):
     subsistema = get_object_or_404(Subsystem, id=id)
 
     if request.method == "POST":
+        produtos_antigos = subsistema.produtos_base or []
+
         form = SubsystemEditForm(request.POST, request.FILES, instance=subsistema)
         if form.is_valid():
-            form.save()
+            produtos = form.cleaned_data.get('produtos_base', [])
+
+            print("PRODUTOS RECEBIDOS NO EDITAR:", produtos)
+
+            novos_produtos = []
+
+            for produto in produtos:
+                indice_foto = produto.get(
+                    'foto_indice'
+                )
+
+                foto_nova = request.FILES.get(
+                    f"foto_produto_{indice_foto}"
+                )
+
+                foto_existente = produto.get('foto')
+
+                produto_data = {
+                    'nome': produto.get('nome', ''),
+                    'fluxos': produto.get('fluxos', []),
+                    'foto': foto_existente
+                }
+
+                if foto_nova:
+                    svg = converter_svg(foto_nova)
+                    nome_foto = os.path.splitext(foto_nova.name)[0]
+
+                    caminho = default_storage.save(
+                        f'subsystem_products/{nome_foto}.svg',
+                        ContentFile(svg.encode("utf-8"))
+                    )
+
+                    produto_data["foto"] = caminho
+                
+                novos_produtos.append(produto_data)
+
+            subsystem = form.save(commit=False)
+            subsystem.produtos_base = (novos_produtos)
+
+            subsystem.save()
+            
             return redirect("list_subsystems")
     else:
-        form_data = "\n".join([p.get("nome", "") for p in subsistema.produtos_base])
         form = SubsystemEditForm(
-            instance=subsistema, initial={"produtos_base": form_data}
+            instance=subsistema
         )
 
     return render(
@@ -900,8 +946,10 @@ def flow_list(request, id):
     current_year = currentyear()
     family = get_object_or_404(Family, id=id)
     rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
+    anos = range(1993, current_year+1)
+    anos_decresc = sorted(anos, reverse=True)
     
-    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'title': 'Fuxogramas da', 'anos': range(1993, current_year+1)})
+    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'title': 'Fuxogramas da', 'anos': anos_decresc})
 
 @never_cache
 @login_required
@@ -983,7 +1031,8 @@ def new_subsystem_to_family(request, id, ano):
 def form_subsystem_to_family(request, id):
     current_year = currentyear()
     family = get_object_or_404(Family, id=id)
-
+    anos = range(1993, current_year+1)
+    anos_decresc = sorted(anos, reverse=True)
 
     if request.method == 'POST':
         subsystem_choice = request.POST.getlist('subsistemas')
@@ -1007,14 +1056,14 @@ def form_subsystem_to_family(request, id):
     
     return render(request, 'seapac/subsystem_form.html', {
         'family': family,
-        'anos': range(1993, current_year+1),
+        'anos': anos_decresc,
         'subsystems': subsystems,
     })
 
 @never_cache
 @login_required
 @group_required('TECNICOS')
-def duplicade_subsystem_to_family(request, id, ano, renda_ano):
+def duplicate_subsystem_to_family(request, id, ano, renda_ano):
     current_year = currentyear()
     family = get_object_or_404(Family, id=id)
     rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
@@ -1490,15 +1539,28 @@ def flow_agricultor(request, id, ano):
 
             foto_produto = produto.get('foto')
 
+            if not foto_produto:
+                for produto_base in subsystem.produtos_base:
+                    if produto_base.get('nome') == nome_p:
+                        foto_produto = produto_base.get('foto')
+                        break
+
             if foto_produto:
-                imagem_produto = settings.MEDIA_URL + foto_produto
-            else:
-                imagem_produto = static(
-                    FOTOS_PRODUTOS.get(
-                        nome_p,
-                        'img/subsystem_products/sem_imagem.svg'
+                foto_produto= foto_produto.lstrip('/')
+
+                if default_storage.exists(foto_produto):
+                    imagem_produto = (
+                        settings.MEDIA_URL + foto_produto
                     )
-                )
+                else:
+                    imagem_produto = static(
+                        FOTOS_PRODUTOS.get(
+                            nome_p,
+                            'img/subsystem_products/sem_imagem.svg'
+                        )
+                    )
+            else:
+                imagem_produto = static(FOTOS_PRODUTOS.get(nome_p, 'img/subsystem_products/sem_imagem.svg'))
 
             nodes.append({
                 'data': {

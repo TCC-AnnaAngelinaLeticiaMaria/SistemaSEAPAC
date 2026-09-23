@@ -32,7 +32,7 @@ urlpatterns = [
     path("<str:id>/fluxo/<int:ano>/", flow, name="flow"),
     path("<str:id>/adicionar-fluxo/", form_subsystem_to_family, name="form_subsystem_to_family"),
     path("<str:id>/editar-subsistemas-fluxo/<int:ano>/", new_subsystem_to_family, name="new_subsystem_to_family"),
-    path("<str:id>/duplicar-fluxo/<int:ano>/<int:renda_ano>", duplicade_subsystem_to_family, name="duplicade_subsystem_to_family"),
+    path("<str:id>/duplicar-fluxo/<int:ano>/<int:renda_ano>", duplicate_subsystem_to_family, name="duplicate_subsystem_to_family"),
     path('<str:id>/deletar-fluxo/<int:ano>/', delete_subsystem_to_family, name='delete_subsystem_to_family'),
     path("<str:id>/lista-fluxos/", flow_list, name="flow_list"),
     # paineis

@@ -67,6 +67,11 @@ form {
 
 .produto-campos {
     display: flex;
+    flex-direction: column;
+}
+
+.produto-campos .campos-inputs {
+    display: flex;
     gap: 3%;
     margin: 15px 0;
     position: relative;
@@ -96,7 +101,10 @@ form {
     background-color: white !important;
     color: #bb2d3b !important;
     border: 1px solid #dc3545 !important;
+    margin-bottom: 20px !important;
+    position: relative;
 }
+
 
 .flow-header {
     display: flex;
@@ -173,6 +181,27 @@ form .subsystem-btn-submit {
 
 .subsys-info .name-subsys {
     font-weight: bold;
+}
+
+.row > .descricao-subsystem textarea {
+    width: 100%;
+}
+
+.foto-produto-atual {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.preview-produto {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 5px;
+    background: white;
 }
 
 .form-subsystem-image {

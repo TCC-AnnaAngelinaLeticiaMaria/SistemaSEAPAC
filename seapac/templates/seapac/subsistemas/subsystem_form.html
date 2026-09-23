@@ -10,64 +10,133 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
+    const MEDIA_URL = "{{ MEDIA_URL }}";
+</script>
+<script>
 
-    const container = document.getElementById('produtos-container');
-    const btnAdicionar = document.getElementById('btn-adicionar-produto');
-    const produtosInput = document.getElementById('id_produtos_base');
+    document.addEventListener('DOMContentLoaded', function () {
+        const container =  document.getElementById('produtos-container');
+        const btnAdicionar = document.getElementById('btn-adicionar-produto')
+        const produtosInput = document.getElementById('id_produtos_base');
+        const form = produtosInput.closest('form');
+        let produtoIndex = 0
 
-    function adicionarProduto(nome='', indice = null) {
+        function adicionarProduto(produtoExiste = null) {
+            const indice = produtoIndex++;
+            const produto = document.createElement('div');
 
-        if (indice === null) {
-            indice = document.querySelectorAll('.produto-item').length;
+            produto.classList.add('produto-item');
+            produto.dataset.fotoExiste = produtoExiste?.foto || '';
+            produto.dataset.fluxos = JSON.stringify(produtoExiste?.fluxos || []);
+
+            produto.innerHTML = 
+                `<div class="produto-campos">
+                    ${
+                        produtoExiste?.foto
+                        ? `
+                            <div class="foto-produto-atual">
+                                <small class="text-muted">
+                                    Imagem atual:
+                                </small>
+
+                                <img
+                                    src="/media/${produtoExiste.foto}"
+                                    alt="${produtoExiste.nome || 'Produto'}"
+                                    class="preview-produto"
+                                >
+                            </div>
+                        `
+                        : ''
+                    }
+
+                    <div class="campos-inputs">
+                        <input type="text" class="form-control produto-nome" placeholder="Nome do produto">
+                        
+                        <small class="info-image-product">
+                            ${
+                                produtoExiste?.foto
+                                ? 'Selecione uma nova imagem somente se quiser substituí-la.'
+                                : 'Insira uma imagem em formato .png, .jpg ou .jpeg'
+                            }
+                        </small>
+
+                        <input type="file" name="foto_produto_${indice}" class="form-control produto-foto" accept=".png, .jpg, .jpeg">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-remover-produto">Remover</button>`;
+
+            container.appendChild(produto)
+
+            produto.querySelector('.produto-nome').value = produtoExiste?.nome || '';
+            produto.querySelector('.btn-remover-produto').addEventListener('click', function () {
+                produto.remove();
+                atualizarProdutos();
+            });
+
+            produto.querySelector('.produto-nome').addEventListener('input', function () {
+                atualizarProdutos();
+            });
+
+            atualizarProdutos()
         }
 
-        const produto = document.createElement('div');
+        function atualizarProdutos() {
+            const produtos = [];
 
-        produto.classList.add('produto-item');
+            document.querySelectorAll('.produto-item').forEach( function (e) {
+                const nome = e.querySelector('.produto-nome').value.trim();
+                const indiceFoto = e.querySelector('.produto-foto').name.replace('foto_produto_', '')
 
-        produto.innerHTML = 
-            `<div class='produto-campos'>
-                <input type="text" class="form-control produto-nome" placeholder="Nome do Produto" value="${nome}">
-                <small class='info-image-product'>Insira uma imagem formato <strong>.svg</strong></small>
-                <input type="file" name='foto_produto_${indice}' class="form-control produto-foto" accept=".svg, .png">
-            </div>
+                if (!nome) {
+                    return;
+                }
+                let fluxos = [];
+                try {
+                    fluxos = JSON.parse(e.dataset.fluxos || '[]');
+                } catch (error) {
+                    fluxos = [];
+                }
 
-                <button type="button" class="btn btn-danger btn-remover-produto">Remover</button>`;
-        
-        container.appendChild(produto)
-
-        produto.querySelector('.btn-remover-produto').addEventListener('click', function () {
-            produto.remove();
-            atualizarProdutos();
-        })
-        produto.querySelector('.produto-nome').addEventListener('input', atualizarProdutos);
-    }
-
-    function atualizarProdutos() {
-        const produtos = []
-
-        document.querySelectorAll('.produto-item').forEach(element => {
-            const nome = element.querySelector('.produto-nome').value.trim();
-            const indiceFoto = element.querySelector('.produto-foto').name.replace('foto_produto_', '')
-
-            if (nome) {
                 produtos.push({
                     nome: nome,
                     foto_indice: indiceFoto,
-                    fluxos: []
+                    foto: e.dataset.fotoExiste || null,
+                    fluxos: fluxos
                 });
-            }
-        });
-        produtosInput.value = JSON.stringify(produtos);
-    }
+            });
 
-    btnAdicionar.addEventListener(
-        'click', function () {
-            adicionarProduto();
+            produtosInput.value = JSON.stringify(produtos);
+            console.log('Produtos enviados:', produtosInput.value);
         }
-    );
 
-    adicionarProduto()
+        btnAdicionar.addEventListener('click', function () {
+            adicionarProduto();
+        });
+
+        let produtosExistentes = []
+
+        try {
+            produtosExistentes = JSON.parse(produtosInput.value || '[]');
+        } catch (error) {
+            console.error('Erro em ler os produtos existentes!', error);
+            produtosExistentes = [];
+        };
+
+        if (produtosExistentes.length > 0) {
+            produtosExistentes.forEach(function (produto) {
+                adicionarProduto(produto);
+            });
+        } else {
+            adicionarProduto()
+        }
+
+        form.addEventListener('submit', function () {
+            atualizarProdutos();
+            console.log('JSON final:',
+                produtosInput.value
+            );
+        });
+    });
 
 </script>
 {% endblock extra_js %}
@@ -116,7 +185,7 @@
                     {{ form.tipo }}
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 descricao-subsystem">
                     <label class="form-label">Descrição</label>
                     {{ form.descricao }}
                 </div>

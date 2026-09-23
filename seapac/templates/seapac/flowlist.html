@@ -103,8 +103,8 @@
                     <p>Visualizar fluxo</p>
                 </a>
                 <div class="box-functions deactivate-box">
-                    <button class="duplicade-flow deactive-duplicade">Duplicar fluxo</button>
-                    <a href="{% url 'delete_subsystem_to_family' family.id renda.ano %}" class="delete-flow">Deletar fluxo</a>
+                    <button class="duplicade-flow deactive-duplicade">Clonar fluxo</button>
+                    <a href="{% url 'delete_subsystem_to_family' family.id renda.ano %}" class="delete-flow">Excluir fluxo</a>
                 </div>
                 <span class="material-symbols-outlined more-flow-detail">more_vert</span>
 
@@ -119,7 +119,7 @@
                                 <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
                             {% endfor %}
                         </select>
-                        <button type="button" class="btn-add-flow" data-url-template="{% url 'duplicade_subsystem_to_family' id=family.id ano=9999 renda_ano=renda.ano %}" onclick="adicionarFluxo(this)">
+                        <button type="button" class="btn-add-flow" data-url-template="{% url 'duplicate_subsystem_to_family' id=family.id ano=9999 renda_ano=renda.ano %}" onclick="adicionarFluxo(this)">
                             Adicionar fluxo
                         </button>
                     </div>
