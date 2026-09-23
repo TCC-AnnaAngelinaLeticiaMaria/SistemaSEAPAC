@@ -949,7 +949,7 @@ def flow_list(request, id):
     anos = range(1993, current_year+1)
     anos_decresc = sorted(anos, reverse=True)
     
-    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'title': 'Fuxogramas da', 'anos': anos_decresc})
+    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'title': 'Fluxogramas da', 'anos': anos_decresc})
 
 @never_cache
 @login_required
