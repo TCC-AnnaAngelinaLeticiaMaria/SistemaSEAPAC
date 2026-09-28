@@ -7,11 +7,75 @@
 
 {% endblock extra_head %}
 
+{% block extra_js %}
+{{ block.super }}
+<script>
+
+    (function () {
+        const form = document.getElementById('form-importar');
+        const modalEl = document.getElementById('loadingModal');
+
+        
+        if (form.dataset.importBound) return;
+        form.dataset.importBound = 'true';
+
+        document.body.appendChild(modalEl);
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        let enviando = false;
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            if (enviando) return;        
+            enviando = true;
+
+            const botao = form.querySelector('button[type="submit"]');
+            if (botao) botao.disabled = true;
+
+            modal.show();
+
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: new FormData(form),
+                });
+
+                const tipo = response.headers.get('Content-Type') || '';
+
+                if (tipo.includes('spreadsheetml')) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Credenciais_temporarias_agricultores.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                    modal.hide();
+                } else {
+                    const html = await response.text();
+                    document.open();
+                    document.write(html);
+                    document.close();
+                }
+            } catch (err) {
+                modal.hide();
+                alert('Ocorreu um erro ao importar a planilha. Tente novamente.');
+            } finally {
+                enviando = false;
+                if (botao) botao.disabled = false;
+            }
+        });
+    })();
+
+</script>
+{% endblock extra_js %}
 
 {% block center %}
 <div class="container py-4">
 
-    <form method="post" enctype="multipart/form-data"
+    <form id="form-importar" method="post" enctype="multipart/form-data"
           class="card shadow-sm border-0 rounded-3 bg-white">
 
         <div class="card-header bg-success text-white rounded-top">
@@ -67,5 +131,18 @@
 
         </div>
     </form>
+
+    <div class="modal" id="loadingModal" data-bs-backdrop="static"
+        data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+        <div class="spinner-border text-success mx-auto mb-3" role="status"></div>
+        <h5 class="mb-1">Importando famílias...</h5>
+        <p class="text-muted mb-0">
+            Isso pode levar alguns instantes. Não feche nem atualize a página.
+        </p>
+        </div>
+    </div>
+    </div>
 </div>
 {% endblock %}

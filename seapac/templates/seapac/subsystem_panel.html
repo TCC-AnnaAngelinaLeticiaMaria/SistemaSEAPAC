@@ -1,5 +1,63 @@
 {% extends 'base.html' %}
 {% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/renda.css' %}">
+{% endblock extra_head %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.tabela-produto').forEach(function (tabela) {
+
+        const checkVender = tabela.querySelector('.vender');
+        const campoMonetario = tabela.querySelector('.valor-monetario');
+        const campoPotencial = tabela.querySelector('.valor-potencial');
+        const colPotencial = tabela.querySelector('.valor-nao-monetario');
+        const colMonetario = tabela.querySelector('.valor-untario');
+
+        if (!checkVender || !campoMonetario || !campoPotencial) {
+            return;
+        }
+
+        function atualizarCampos() {
+            if (checkVender.checked) {
+              campoMonetario.style.display = '';
+              colMonetario.style.display = '';
+              campoPotencial.style.display = 'none';
+              colPotencial.style.display = 'none';
+              const inputPotencial = campoPotencial.querySelector('input');
+
+              if (inputPotencial) {
+                inputPotencial.value = '';
+              }
+
+            } else {
+                campoMonetario.style.display = 'none';
+                colMonetario.style.display = 'none';
+                campoPotencial.style.display = '';
+                colPotencial.style.display = '';
+                const inputMonetario = campoMonetario.querySelector('input');
+
+                if (inputMonetario) {
+                  inputMonetario.value = '';
+                }
+            }
+        }
+
+        atualizarCampos();
+        checkVender.addEventListener('change', atualizarCampos);
+
+    });
+
+  });
+
+</script>
+{% endblock extra_js %}
+
 {% block center %}
 
 <a href="{% url 'flow' family.id renda_ano.ano %}" class="btn-voltar-page">
@@ -18,69 +76,90 @@
 
 <p>{{subsystem.descricao}}</p>
 {% if type == 'edit' %}
-<form method="post">
-  {% csrf_token %}
-  {% if formset.non_form_errors %}
-    <div class="alert alert-danger">
-      <ul>
-        {% for err in formset.non_form_errors %}
-          <li>{{ err }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {% if formset.non_form_errors %}
+      <div class="alert alert-danger">
+        <ul>
+          {% for err in formset.non_form_errors %}
+            <li>{{ err }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
 
-  <table class="table">
-    <thead>
-      {% if subsystem.tipo == "ME" %}
-        <tr>
-          <th>Produto</th>
-          <th>Quantidade</th>
-          <th>Unidade</th>
-          <th>Custo Unitário</th>
-          <th>Destino</th>
-        </tr>
-      {% else %}
-        <tr>
-          <th>Produto</th>
-          <th>Quantidade</th>
-          <th>Unidade</th>
-          <th>Custo Unitário</th>
-          <th>Valor Unitário</th>
-          <th>Valor Não Monetário</th>
-          <th>Destino</th>
-        </tr>
-      {% endif %}
-    </thead>
-    <tbody>
-      {{ formset.management_form }}
-      {% for form in formset %}
-      <tr>
-        <td>{{ form.nome_produto }}</td>
-        <td>{{ form.qtd }}</td>
-        <td>{{ form.und }}</td>
-        <td>{{ form.custo }}</td>
-
-        {% if subsystem.tipo != "ME" %}
-          <td>{{ form.valor }}</td>
-          <td>{{ form.valor_potencial }}</td>
-        {% endif %}
-
-        <td>{{ form.destino }}</td>
-        <td>
-          {% if form.DELETE %}
-            {{ form.DELETE }} <label>Excluir</label>
+    {{ formset.management_form }}
+    {% for form in formset %}
+      <table class="table tabela-produto">
+        <thead class="back-green">
+          {% if subsystem.tipo == "ME" %}
+            <tr>
+              <th>Produto</th>
+              <th>Quantidade</th>
+              <th>Unidade</th>
+              <th>Custo Unitário</th>
+              <th>Destino</th>
+            </tr>
+          {% else %}
+            <tr>
+              <th>Produto</th>
+              <th>Quantidade</th>
+              <th>Unidade</th>
+              <th>Custo Unitário</th>
+              <th class="valor-untario">Valor Unitário</th>
+              <th class="valor-nao-monetario">Valor Não Monetário</th>
+              <th>Vender</th>
+              <th>Destino</th>
+              <th>Excluir</th>
+            </tr>
           {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <button type="submit" class="btn btn-success">Salvar</button>
-</form>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ form.nome_produto }}</td>
+            <td>{{ form.qtd }}</td>
+            <td>{{ form.und }}</td>
+            <td>{{ form.custo }}</td>
+
+            {% if subsystem.tipo != "ME" %}
+              
+              <td class="valor-monetario">
+                  <div class="campo-valor">
+                      {{ form.valor }}
+                  </div>
+              </td>
+
+              <td class="valor-potencial">
+                <div class="campo-valor">
+                  {{ form.valor_potencial }}
+                </div>
+              </td>
+
+              <td>
+                <label class="vender-label checkbox-wrapper-2">
+                  <input type="checkbox" class="vender sc-gJwTLC ikxBAC" {% if form.valor.value %}checked{% endif %}>
+                </label>
+              </td>
+
+            {% endif %}
+
+            <td>{{ form.destino }}</td>
+            <td>
+              <label class="checkbox-wrapper-2">
+                {% if form.DELETE %}
+                  {{ form.DELETE }}
+                {% endif %}
+              </label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    {% endfor %}
+    <button type="submit" class="btn btn-success">Salvar</button>
+  </form>
 {% else %}
   <table class="table">
-    <thead>
+    <thead class="back-green">
       {% if subsystem.tipo == "ME" %}
         <tr>
           <th>Produto</th>
