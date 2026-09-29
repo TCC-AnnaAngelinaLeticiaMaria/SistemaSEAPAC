@@ -59,7 +59,7 @@
             $('#subsystemFilter').select2();
         });
 
-        function confirmDelete(event, form) {
+        function confirmDelete(event, object) {
 
             event.preventDefault()
 
@@ -82,7 +82,13 @@
                 }).then((result) => {
 
                     if (result.isConfirmed) {
-                        form.submit();
+
+                        if (object.tagName === 'FORM') {
+                            object.submit();
+                        } else {
+                            window.location.href = object.href;
+                        }
+
                     }
 
                 });

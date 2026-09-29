@@ -104,7 +104,7 @@
                 </a>
                 <div class="box-functions deactivate-box">
                     <button class="duplicade-flow deactive-duplicade">Clonar fluxo</button>
-                    <a href="{% url 'delete_subsystem_to_family' family.id renda.ano %}" class="delete-flow">Excluir fluxo</a>
+                    <a href="{% url 'delete_subsystem_to_family' family.id renda.ano %}" class="delete-flow" onclick="return confirmDelete(event, this)">Excluir fluxo</a>
                 </div>
                 <span class="material-symbols-outlined more-flow-detail">more_vert</span>
 
