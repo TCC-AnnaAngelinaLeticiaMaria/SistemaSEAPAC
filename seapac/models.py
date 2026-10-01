@@ -36,8 +36,6 @@ class Community(models.Model):
     def __str__(self):
             return self.nome_comunidade
 
-LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
-
 
 class FamilySubsystem(models.Model):
     subsystem = models.ForeignKey("Subsystem", on_delete=models.CASCADE)
@@ -74,10 +72,6 @@ class Family(models.Model):
             f"{fs.subsystem.nome_subsistema} ({len(fs.produtos_saida)} produtos)"
             for fs in FamilySubsystem.objects.filter(family_renda__family=self)
         )
-
-    def get_visitas_confirmadas(self):
-        return self.eventos.filter(confirmado=True).count()
-
 
 def currentyear():
         return timezone.now().year
