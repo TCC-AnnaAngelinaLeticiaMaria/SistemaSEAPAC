@@ -44,6 +44,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.forms import formset_factory
 from django.core.files.base import ContentFile
 from .utils.svg_converter import converter_svg
+from .utils.graficos import grafico_barrasVerticais, br_for_float, grafico_mix
 from django.core.files.storage import default_storage
 from django.conf import settings
 from django.contrib import messages
@@ -342,7 +343,39 @@ def register(request):
 @group_required('TECNICOS', 'AGRICULTORES')
 def detail_family(request, id):
     family = get_object_or_404(Family, id=id)
-    context = {"family": family, "title": "Detalhes da "}
+    family_renda = list(FamilyRenda.objects.filter(family=family).order_by('ano'))
+    
+    anos = []
+    rendas_monetarias = []
+    totais_nao_monetarios = []
+
+    for renda in family_renda:
+        renda.subsystems = FamilySubsystem.objects.filter(
+            family_renda=renda
+        ).select_related('subsystem')
+
+        resultado = renda.calcular_renda()
+        anos.append(renda.ano)
+        rendas_monetarias.append(br_for_float(resultado['renda_total']))
+
+        total_qtd = 0
+        for fs in renda.subsystems:
+            for produto in fs.produtos_saida or []:
+                for fluxo in produto.get('fluxos', []):
+                    total_qtd += fluxo.get('qtd') or 0
+        totais_nao_monetarios.append(total_qtd)
+
+    grafico_nao_monetario = grafico_barrasVerticais(
+        anos, totais_nao_monetarios, titulo='Valores não monetários por ano', ylabel='Quantidade', cor='#4a7c59',
+    )
+
+    grafico_monetario = grafico_barrasVerticais(
+        anos, rendas_monetarias, titulo='Valores monetários por ano', ylabel='Valor (R$)', cor='#6ab04c', prefixo='R$',
+    )
+
+    grafico_comparativo = grafico_mix(anos, rendas_monetarias, totais_nao_monetarios)
+
+    context = {"family": family, "title": "Detalhes da ", 'grafico_monetario': grafico_monetario, 'grafico_nao_monetario': grafico_nao_monetario, 'grafico_comparativo': grafico_comparativo, 'renda': len(family_renda)}
     return render(request, "seapac/familias/detail_family.html", context)
 
 
@@ -1358,13 +1391,40 @@ def search_timeline_event(request, id):
 @group_required('TECNICOS')
 def relatorio_family_pdf(request, id):
     family = get_object_or_404(Family, id=id)
-    family_renda = FamilyRenda.objects.filter(family=family)
+    family_renda = list(FamilyRenda.objects.filter(family=family).order_by('ano'))
+
+    anos = []
+    rendas_monetarias = []
+    totais_nao_monetarios = []
+
     for renda in family_renda:
         renda.subsystems = FamilySubsystem.objects.filter(
             family_renda=renda
         ).select_related('subsystem')
 
-    html_txt = render(request, 'seapac/familias/pdf_familia.html', {'family': family, 'renda_familia': family_renda, 'renda': renda}).content.decode("utf-8")
+        resultado = renda.calcular_renda()
+        anos.append(renda.ano)
+        rendas_monetarias.append(br_for_float(resultado['renda_total']))
+
+        total_qtd = 0
+        for fs in renda.subsystems:
+            for produto in fs.produtos_saida or []:
+                for fluxo in produto.get('fluxos', []):
+                    total_qtd += fluxo.get('qtd') or 0
+        totais_nao_monetarios.append(total_qtd)
+
+    grafico_nao_monetario = grafico_barrasVerticais(
+        anos, totais_nao_monetarios, titulo='Valores não monetários por ano', ylabel='Quantidade', cor='#4a7c59',
+    )
+
+    grafico_monetario = grafico_barrasVerticais(
+        anos, rendas_monetarias, titulo='Valores monetários por ano', ylabel='Valor (R$)', cor='#6ab04c', prefixo='R$',
+    )
+
+    grafico_comparativo = grafico_mix(anos, rendas_monetarias, totais_nao_monetarios)
+
+    html_txt = render(request, 'seapac/familias/pdf_familia.html', {'family': family, 'renda_familia': family_renda, 'grafico_monetario': grafico_monetario, 'grafico_nao_monetario': grafico_nao_monetario, 'grafico_comparativo': grafico_comparativo, 'renda': len(family_renda)}).content.decode("utf-8")
+
     css_path = finders.find('css/family_info_pdf.css')
     pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
 

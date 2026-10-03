@@ -217,6 +217,10 @@ class FamilyRenda(models.Model):
             "renda_total":self.formatar_valor(renda_total),
             "renda_total_potencial": self.formatar_valor(renda_total_potencial),
             "diferenca": self.formatar_valor(diferenca),
+            "brutos": {
+                "renda_total": float(renda_total),
+                "nao_monetario": float(diferenca),
+            },
         }
     
     def __str__(self):

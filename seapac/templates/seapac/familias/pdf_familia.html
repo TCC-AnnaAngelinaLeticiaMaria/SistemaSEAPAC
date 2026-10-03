@@ -34,6 +34,30 @@
                                 <p class="col-sm-9">{{ family.contato }}</p>
                             </dl>
                         </div>
+                        {% if not renda == 0 %}
+                            <div>
+                                <div class="card-grafico">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Valores monetários</h5>
+                                    </div>
+                                    <div class="card-body"><img class="grafico" src="data:image/png;base64,{{ grafico_monetario }}" alt="grafico de valores monetários por ano"></div>
+                                </div>
+        
+                                <div class="card-grafico">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Valores não monetários</h5>
+                                    </div>
+                                    <div class="card-body"><img class="grafico" src="data:image/png;base64,{{ grafico_nao_monetario }}" alt="grafico de valores não monetários por ano"></div>
+                                </div>
+
+                                <div class="card-grafico">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Comparativo Valores monetários e não monetários</h5>
+                                    </div>
+                                    <div class="card-body"><img class="grafico" src="data:image/png;base64,{{ grafico_comparativo }}" alt="grafico comparativo de valores não monetários por ano"></div>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="card-subsys">
                         <div class="card-header">
