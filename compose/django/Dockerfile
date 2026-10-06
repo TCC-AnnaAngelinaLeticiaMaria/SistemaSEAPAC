@@ -1,6 +1,6 @@
 # pull official base image
-FROM python:3.11.3-slim-bullseye
-
+FROM python:3.11-slim-bookworm
+#FROM python
 # set work directory
 WORKDIR /app
 
@@ -9,10 +9,10 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install system dependencies
-RUN apt-get update && apt-get install -y --fix-missing netcat
+#RUN apt-get update && apt-get install -y --fix-missing netcat-openbsd
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        netcat \
+        netcat-openbsd \
         libglib2.0-0 \
         libpango-1.0-0 \
         libpangoft2-1.0-0 \
