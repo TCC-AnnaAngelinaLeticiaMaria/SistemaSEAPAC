@@ -15,5 +15,22 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
         if_key_exists: replace
+    - name: Debug SSH
+      run: |
+        echo "=== SSH FILES ==="
+        ls -la ~/.ssh
+    
+        echo "=== PUBLIC KEY DERIVED FROM PRIVATE KEY ==="
+        ssh-keygen -y -f ~/.ssh/id_rsa
+    
+        echo "=== FINGERPRINT ==="
+        ssh-keygen -y -f ~/.ssh/id_rsa | ssh-keygen -lf -
+    
+        echo "=== SSH CONNECTION ==="
+        ssh -vvv \
+          -o BatchMode=yes \
+          -o IdentitiesOnly=yes \
+          -i ~/.ssh/id_rsa \
+          ubuntu@191.252.38.118 "echo SSH_OK"
     - name: Deploy to host
       run: ${{ vars.SSH_CMD }} ${{ vars.DEPLOY_CMD }}
