@@ -62,13 +62,18 @@ class Tecnico(Usuario):
             img.thumbnail(tamanho_max)
             img.save(caminho)
 
-
     def __str__(self):
         return f"{self.username} - {self.cpf}"
 
 
 class Agricultor(Usuario):
-    familia = models.OneToOneField('seapac.Family', on_delete=models.SET_NULL, blank=True, null=True, related_name='agricultor')
+    familia = models.OneToOneField(
+        "seapac.Family",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="agricultor",
+    )
 
     primeiro_acesso = models.BooleanField(default=True)
 

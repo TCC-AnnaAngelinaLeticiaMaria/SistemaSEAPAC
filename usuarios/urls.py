@@ -12,12 +12,16 @@ urlpatterns = [
     ),
     path("cadastrar-tecnico/", views.cadastrar_tecnico, name="cadastrar_tecnico"),
     path("login_tecnico/", views.login_view, name="login_tecnico"),
-    path('login_agricultor/', views.login_agricultor, name='login_agricultor'),
+    path("login_agricultor/", views.login_agricultor, name="login_agricultor"),
     path("logout/", views.logout_view, name="logout"),
     path("perfil/", views.perfil_view, name="perfil"),
-    path('escolher_tipo/', views.choice_type, name='escolher_tipo'),
+    path("escolher_tipo/", views.choice_type, name="escolher_tipo"),
     # Recuperação de senha
-    path('alterar_senha_agricultor/', views.alterar_senha_agricultor, name='alterar_senha_agricultor'),
+    path(
+        "alterar_senha_agricultor/",
+        views.alterar_senha_agricultor,
+        name="alterar_senha_agricultor",
+    ),
     path(
         "reset_password/",
         auth_views.PasswordResetView.as_view(
