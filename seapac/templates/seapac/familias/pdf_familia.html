@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/family_info_pdf.css' %}">
+</head>
+<body>
+    <h1 class='title'>{% block title %}{{ title }}{% endblock title %}{{family.get_nome_familia}}</h1>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-info">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-info-circle"></i>Informações</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <h6 class="col-sm-3">Nome da Família:</h6>
+                                <p class="col-sm-9 text-success">{{ family.get_nome_familia }}</p>
+                                
+                                <h6 class="col-sm-3">Responsável:</h6>
+                                <p class="col-sm-9">{{ family.nome_titular}}</p>
+
+                                <h6 class="col-sm-3">Município:</h6>
+                                <p class="col-sm-9">{{ family.municipio }}</p>
+
+                                <h6 class="col-sm-3">Comunidade:</h6>
+                                <p class="col-sm-9">{{ family.comunidade }}</p>
+                                
+                                <h6 class="col-sm-3">Contato:</h6>
+                                <p class="col-sm-9">{{ family.contato }}</p>
+                            </dl>
+                        </div>
+                    </div>
+                    <div class="card-subsys">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="	fas fa-info-circle"></i>Subsistemas</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for renda in renda_familia %}
+                                <div>
+                                    <h6 class="col-sm-3">Subsistema de {{ renda.ano }}</h6>
+                                    <ul>
+                                    {% for subsys in renda.subsystems %}
+                                        <li class="subsystem-name">
+                                            {{ subsys.subsystem.nome_subsistema }}
+                                        </li>
+                                    {% empty %}
+                                        <li class="subsystem-name">
+                                            Nenhum subsistema cadastrado.
+                                        </li>
+                                    {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

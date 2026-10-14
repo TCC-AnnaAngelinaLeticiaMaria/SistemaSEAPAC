@@ -8,6 +8,11 @@
 {% endblock extra_head %}
 
 {% block center %}
+<a href="{% url 'dashboard_agricultor' %}" class="btn-voltar-page">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar
+</a>
+
 <div class="page active" id="dashboard">
     <div class="page-header">
         <h1 class="page-title">{% block title %}{{ title }}{% endblock title %}</h1>

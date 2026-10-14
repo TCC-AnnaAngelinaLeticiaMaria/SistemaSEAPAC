@@ -1,6 +1,146 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_head %}
+
+    <link rel="stylesheet" href="{% static 'css/formflow.css' %}">
+
+{% endblock extra_head %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    const MEDIA_URL = "{{ MEDIA_URL }}";
+</script>
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const container =  document.getElementById('produtos-container');
+        const btnAdicionar = document.getElementById('btn-adicionar-produto')
+        const produtosInput = document.getElementById('id_produtos_base');
+        const form = produtosInput.closest('form');
+        let produtoIndex = 0
+
+        function adicionarProduto(produtoExiste = null) {
+            const indice = produtoIndex++;
+            const produto = document.createElement('div');
+
+            produto.classList.add('produto-item');
+            produto.dataset.fotoExiste = produtoExiste?.foto || '';
+            produto.dataset.fluxos = JSON.stringify(produtoExiste?.fluxos || []);
+
+            produto.innerHTML = 
+                `<div class="produto-campos">
+                    ${
+                        produtoExiste?.foto
+                        ? `
+                            <div class="foto-produto-atual">
+                                <small class="text-muted">
+                                    Imagem atual:
+                                </small>
+
+                                <img
+                                    src="/media/${produtoExiste.foto}"
+                                    alt="${produtoExiste.nome || 'Produto'}"
+                                    class="preview-produto"
+                                >
+                            </div>
+                        `
+                        : ''
+                    }
+
+                    <div class="campos-inputs">
+                        <input type="text" class="form-control produto-nome" placeholder="Nome do produto">
+                        
+                        <small class="info-image-product">
+                            ${
+                                produtoExiste?.foto
+                                ? 'Selecione uma nova imagem somente se quiser substituí-la.'
+                                : 'Insira uma imagem em formato .png, .jpg ou .jpeg'
+                            }
+                        </small>
+
+                        <input type="file" name="foto_produto_${indice}" class="form-control produto-foto" accept=".png, .jpg, .jpeg">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-remover-produto">Remover</button>`;
+
+            container.appendChild(produto)
+
+            produto.querySelector('.produto-nome').value = produtoExiste?.nome || '';
+            produto.querySelector('.btn-remover-produto').addEventListener('click', function () {
+                produto.remove();
+                atualizarProdutos();
+            });
+
+            produto.querySelector('.produto-nome').addEventListener('input', function () {
+                atualizarProdutos();
+            });
+
+            atualizarProdutos()
+        }
+
+        function atualizarProdutos() {
+            const produtos = [];
+
+            document.querySelectorAll('.produto-item').forEach( function (e) {
+                const nome = e.querySelector('.produto-nome').value.trim();
+                const indiceFoto = e.querySelector('.produto-foto').name.replace('foto_produto_', '')
+
+                if (!nome) {
+                    return;
+                }
+                let fluxos = [];
+                try {
+                    fluxos = JSON.parse(e.dataset.fluxos || '[]');
+                } catch (error) {
+                    fluxos = [];
+                }
+
+                produtos.push({
+                    nome: nome,
+                    foto_indice: indiceFoto,
+                    foto: e.dataset.fotoExiste || null,
+                    fluxos: fluxos
+                });
+            });
+
+            produtosInput.value = JSON.stringify(produtos);
+            console.log('Produtos enviados:', produtosInput.value);
+        }
+
+        btnAdicionar.addEventListener('click', function () {
+            adicionarProduto();
+        });
+
+        let produtosExistentes = []
+
+        try {
+            produtosExistentes = JSON.parse(produtosInput.value || '[]');
+        } catch (error) {
+            console.error('Erro em ler os produtos existentes!', error);
+            produtosExistentes = [];
+        };
+
+        if (produtosExistentes.length > 0) {
+            produtosExistentes.forEach(function (produto) {
+                adicionarProduto(produto);
+            });
+        } else {
+            adicionarProduto()
+        }
+
+        form.addEventListener('submit', function () {
+            atualizarProdutos();
+            console.log('JSON final:',
+                produtosInput.value
+            );
+        });
+    });
+
+</script>
+{% endblock extra_js %}
+
 {% block center %}
 
 <div class="container py-4" style="max-width: 850px;">
@@ -45,7 +185,7 @@
                     {{ form.tipo }}
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 descricao-subsystem">
                     <label class="form-label">Descrição</label>
                     {{ form.descricao }}
                 </div>
@@ -65,11 +205,15 @@
             <br>
 
             <h5 class="text-success border-bottom pb-2 mb-4">Informações sobre o Produtos</h5>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <label class="form-label">Produtos Base</label>
-                    {{ form.produtos_base }}
-                </div>
+
+            <div form-group-products>
+                <p>Produtos Base</p>
+
+                {{ form.produtos_base }}
+
+                <div id="produtos-container"></div>
+
+                <button type="button" id="btn-adicionar-produto" class="btn btn-success">+ Adicionar produto</button>
             </div>
 
             <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">

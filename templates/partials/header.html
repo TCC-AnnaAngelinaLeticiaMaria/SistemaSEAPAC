@@ -46,12 +46,14 @@
                         {% endif %}
                         <span>{{ user.get_full_name|default:user.username }}</span>
                     </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item" href="{% url 'perfil' %}">
-                            <i class="bi bi-person"></i> Meu Perfil
-                        </a>
-                    </li>
+                    {% if not user.is_agricultor %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'perfil' %}">
+                                <i class="bi bi-person"></i> Meu Perfil
+                            </a>
+                        </li>
+                    {% endif %}
                     {% if user.is_administrador %}
                         <li><hr class="dropdown-divider"></li>
                         <li>

@@ -73,8 +73,9 @@
             </div>
         </div>
     </div>
-    <a class="btn btn-primary" href="{% url 'renda_detalhes_agricultor' family.id ano %}">
-        <span class="material-symbols-outlined">arrow_outward</span>Ver detalhes
+    <a class="btn btn-primary" href="{% url 'renda_detalhes_agricultor' family.id ano %}" style="display: flex; justify-content: center; height: fit-content; width: fit-content;">
+        <span class="material-symbols-outlined">arrow_outward</span>
+        <p style="margin: 0;">Ver detalhes</p>
     </a>
 </section>
 {% endblock %}

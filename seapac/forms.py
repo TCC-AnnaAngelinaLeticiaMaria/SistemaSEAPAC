@@ -331,14 +331,7 @@ class BaseFluxoFormSet(BaseFormSet):
 class SubsystemForm(ModelForm):
     produtos_base = forms.CharField(
         required=False,
-        widget=forms.Textarea(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Digite um produto por linha:\nCarne\nLeite\nEsterco",
-                "rows": 5,
-            }
-        ),
-        label="Produtos Base",
+        widget=forms.HiddenInput(),
     )
     foto_subsistema = forms.ImageField(
         required=False,
@@ -370,7 +363,7 @@ class SubsystemForm(ModelForm):
         foto = self.cleaned_data.get("foto_subsistema")
         if not foto:
             return foto
-        extensoes_validas = [".jpg", ".jpeg", ".png"]
+        extensoes_validas = [".jpg", ".jpeg", ".png", ".webp"]
         ext = os.path.splitext(foto.name)[1].lower()
         if ext not in extensoes_validas:
             raise forms.ValidationError(
@@ -385,36 +378,32 @@ class SubsystemForm(ModelForm):
 
     def clean_produtos_base(self):
         data = self.cleaned_data.get("produtos_base", "")
-        if isinstance(data, str) and data.strip().startswith("["):
-            try:
-                parsed = json.loads(data)
-                if isinstance(parsed, list):
-                    return parsed
-            except json.JSONDecodeError:
-                raise forms.ValidationError(
-                    "JSON inválido. Use uma lista ou uma linha por produto."
-                )
-        linhas = [linha.strip() for linha in str(data).splitlines() if linha.strip()]
-        produtos = [{"nome": linha, "fluxos": []} for linha in linhas]
-        return produtos
 
+        if not data:
+            return []
+
+        try:
+            parsed = json.loads(data)
+            if not isinstance(parsed, list):
+                raise forms.ValidationError(
+                    'Os produtos devem estar em formato de lista'
+                )
+            return parsed
+        
+        except json.JSONDecodeError:
+            raise forms.ValidationError(
+                "JSON inválido. Use uma lista ou uma linha por produto."
+            )
 
 class SubsystemEditForm(SubsystemForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and getattr(self.instance, "produtos_base", None):
-            pb = self.instance.produtos_base
-            if isinstance(pb, list):
-                linhas = []
-                for item in pb:
-                    nome = item.get("nome") if isinstance(item, dict) else str(item)
-                    if nome:
-                        linhas.append(nome)
-                self.initial["produtos_base"] = "\n".join(linhas)
-            elif isinstance(pb, str):
-                self.initial["produtos_base"] = pb
-
+        if self.instance and self.instance.produtos_base:
+            self.initial['produtos_base'] = json.dumps(
+                self.instance.produtos_base,
+                ensure_ascii=False
+            )
 
 # ---------------------------
 # TIMELINE EVENT

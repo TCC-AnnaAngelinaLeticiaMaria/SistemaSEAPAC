@@ -24,3 +24,4 @@ pandas==2.2.3
 Unidecode==1.4.0
 WeasyPrint==69.0
 django-formtools==2.5.1
+vtracer==0.6.15
