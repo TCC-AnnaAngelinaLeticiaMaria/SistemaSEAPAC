@@ -32,7 +32,7 @@ class TechnicianInline(admin.TabularInline):
     extra = 1
     verbose_name = "Técnico no Projeto"
     verbose_name_plural = "Técnicos no Projeto"
-
+    
 
 @admin.register(FamilyRenda)
 class FamilyRendaAdmin(admin.ModelAdmin):
@@ -65,14 +65,19 @@ class SubsystemAdmin(admin.ModelAdmin):
 
     def descricao_resumida(self, obj):
         return (
-            (obj.descricao[:60] + "...") if len(obj.descricao) > 60 else obj.descricao
+            (obj.descricao[:60] + "...")
+            if len(obj.descricao) > 60
+            else obj.descricao
         )
 
     descricao_resumida.short_description = "Descrição"
 
     def foto_preview(self, obj):
         if obj.get_photo_url():
-            return f'<img src="{obj.get_photo_url()}" width="120" style="border-radius: 6px;" />'
+            return (
+                f'<img src="{obj.get_photo_url()}" width="120" '
+                'style="border-radius: 6px;" />'
+            )
         return "(Sem foto)"
 
     foto_preview.allow_tags = True
@@ -114,7 +119,10 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(FamilySubsystem)
 class FamilySubsystemAdmin(admin.ModelAdmin):
     list_display = ("produtos_saida_count", "family_renda")
-    search_fields = ("family_renda__family__nome_titular", "subsystem__nome_subsistema")
+    search_fields = (
+        "family_renda__family__nome_titular",
+        "subsystem__nome_subsistema",
+    )
     list_select_related = ("family_renda__family", "subsystem")
 
     def produtos_saida_count(self, obj):
