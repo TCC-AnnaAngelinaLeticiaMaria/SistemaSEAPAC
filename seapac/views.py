@@ -1,13 +1,11 @@
 from .models import (
     Family,
     Subsystem,
-    Evento,
     Project,
     Technician,
     FamilySubsystem,
     TimelineEvent,
     Municipality,
-    Evento,
     FamilyRenda,
     Community,
     currentyear,
@@ -159,14 +157,6 @@ def dashboard(request):
     )
     total_families = Family.objects.count()
     total_tecnicos = Technician.objects.count()
-#    total_avancado = len(
-#        [f for f in Family.objects.all() if f.get_nivel() == "Avancado"]
-#    )
-#    total_intermediario = len(
-#        [f for f in Family.objects.all() if f.get_nivel() == "Intermediario"]
-#    )
-#    total_inicial = len([f for f in Family.objects.all() if f.get_nivel() == "Inicial"])
-    total_visitas = Evento.objects.count()
 
     context = {
         "families": families,
@@ -174,7 +164,6 @@ def dashboard(request):
         "title": "Página Inicial - Dashboard",
         "query": query,
         "total_municipios": total_municipios,
-        "total_visitas": total_visitas,
         "total_tecnicos": total_tecnicos,
     }
     return render(request, "seapac/dashboard.html", context)
@@ -1273,26 +1262,11 @@ def timeline(request, id):
     family = get_object_or_404(Family, id=id)
     timeline_events = family.timeline_events.all().order_by("data", "id")
 
-#    secoes = {}
-#    for evento in timeline_events:
-#        if evento.secao not in secoes:
-#            secoes[evento.secao] = []
-#        secoes[evento.secao].append(evento)
-
-#    conteudo_mermaid = "timeline\n"
-#    for secao, eventos in secoes.items():
-#        conteudo_mermaid += f"    section {secao}\n"
-#        for evento in eventos:
-#            conteudo_mermaid += (
-#                f"        {evento.data} : {evento.titulo} - {evento.descricao}\n"
-#            )
-
     context = {
         "id": id,
         "family": family,
         "events": timeline_events,
         "title": "Linha do Tempo",
-#        "conteudo_mermaid": conteudo_mermaid,
     }
     return render(request, "seapac/timeline/timeline.html", context)
 
