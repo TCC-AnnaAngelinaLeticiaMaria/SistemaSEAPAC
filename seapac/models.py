@@ -24,14 +24,14 @@ class Technician(models.Model):
 
 
 class Municipality(models.Model):
-    nome = models.CharField(max_length=30, null=True)
+    nome = models.CharField(max_length=30)
 
     def __str__(self):
         return self.nome
 
 class Community(models.Model):
     nome_comunidade = models.CharField(max_length=100)
-    municipio = models.ForeignKey(Municipality, null=True)
+    municipio = models.ForeignKey(Municipality, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
             return self.nome_comunidade
