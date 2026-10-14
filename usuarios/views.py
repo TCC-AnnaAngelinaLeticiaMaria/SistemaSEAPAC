@@ -10,7 +10,7 @@ from .forms import (
     TecnicoFiltroForm,
     TecnicoEditForm,
     AgricultorLoginForm,
-    TecnicoCreationForm
+    TecnicoCreationForm,
 )
 from .models import Usuario, Tecnico, Agricultor
 from django.views.decorators.cache import never_cache
@@ -18,8 +18,10 @@ from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import get_object_or_404
 
+
 def choice_type(request):
-    return render(request, 'login/escolher_tipo.html')
+    return render(request, "login/escolher_tipo.html")
+
 
 def cadastrar_tecnico(request):
 
@@ -28,7 +30,7 @@ def cadastrar_tecnico(request):
         if form.is_valid():
             user = form.save()
 
-            grupo, created = Group.objects.get_or_create(name='TECNICOS')
+            grupo, created = Group.objects.get_or_create(name="TECNICOS")
             user.groups.add(grupo)
 
             messages.success(
@@ -40,32 +42,33 @@ def cadastrar_tecnico(request):
 
     return render(request, "login/cadastrar.html", {"form": form})
 
+
 def login_agricultor(request):
     if request.user.is_authenticated:
         if request.user.is_agricultor:
-            return redirect('dashboard_agricultor')
+            return redirect("dashboard_agricultor")
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = AgricultorLoginForm(request, data=request.POST)
 
         if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
             user = authenticate(request=request, username=username, password=password)
 
             if user is not None:
                 login(request, user)
 
-                if hasattr(user, 'agricultor') and user.agricultor.primeiro_acesso:
-                    return redirect('alterar_senha_agricultor')
+                if hasattr(user, "agricultor") and user.agricultor.primeiro_acesso:
+                    return redirect("alterar_senha_agricultor")
 
-                messages.success(
-                    request, f'Seja bem-vindo ao Sistema SEAPAC'
-                )
+                messages.success(request, f"Seja bem-vindo ao Sistema SEAPAC")
 
                 next_url = request.GET.get("next")
-                if next_url and request.user.groups.filter(
-                    name__in=["AGRICULTORES"]).exists():
+                if (
+                    next_url
+                    and request.user.groups.filter(name__in=["AGRICULTORES"]).exists()
+                ):
                     return redirect(next_url)
 
                 return redirect("dashboard_agricultor")
@@ -76,13 +79,14 @@ def login_agricultor(request):
 
     return render(request, "login/login_agricultor.html", {"form": form})
 
+
 def alterar_senha_agricultor(request):
     agricultor = request.user.agricultor
 
     if not agricultor.primeiro_acesso:
-        return redirect('dashboard_agricultor')
+        return redirect("dashboard_agricultor")
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = SetPasswordForm(request.user, request.POST)
 
         if form.is_valid():
@@ -90,19 +94,15 @@ def alterar_senha_agricultor(request):
 
             update_session_auth_hash(request, user)
 
-            Agricultor.objects.filter(
-                pk=agricultor.pk
-            ).update(
-                primeiro_acesso=False
-            )
+            Agricultor.objects.filter(pk=agricultor.pk).update(primeiro_acesso=False)
 
-            return redirect('dashboard_agricultor')
+            return redirect("dashboard_agricultor")
 
     else:
         form = SetPasswordForm(request.user)
 
-    return render(request, 'login/alterar_senha_agricultor.html', {'form': form}
-    )
+    return render(request, "login/alterar_senha_agricultor.html", {"form": form})
+
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -123,8 +123,10 @@ def login_view(request):
                 )
 
                 next_url = request.GET.get("next")
-                if next_url and request.user.groups.filter(
-                    name__in=["TECNICOS"]).exists():
+                if (
+                    next_url
+                    and request.user.groups.filter(name__in=["TECNICOS"]).exists()
+                ):
                     return redirect(next_url)
 
                 return redirect("dashboard")

@@ -6,23 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('seapac', '0025_alter_evento_data_alter_family_data_inicio_and_more'),
+        ("seapac", "0025_alter_evento_data_alter_family_data_inicio_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='municipality',
-            name='comunidade',
+            model_name="municipality",
+            name="comunidade",
             field=models.CharField(max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='family',
-            name='data_inicio',
+            model_name="family",
+            name="data_inicio",
             field=models.PositiveSmallIntegerField(null=True),
         ),
         migrations.AlterField(
-            model_name='timelineevent',
-            name='secao',
-            field=models.CharField(blank=True, choices=[('mundo-externo', 'Externo'), ('mundo-interno', 'Interno')], max_length=100),
+            model_name="timelineevent",
+            name="secao",
+            field=models.CharField(
+                blank=True,
+                choices=[("mundo-externo", "Externo"), ("mundo-interno", "Interno")],
+                max_length=100,
+            ),
         ),
     ]
