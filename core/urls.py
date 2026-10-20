@@ -105,6 +105,7 @@ urlpatterns = [
     path("familia/<int:id>/relatorio/", relatorio_family_pdf, name="relatorio_family"),
     path("<str:id>/timeline/gerar_pdf", pdf_timeline, name="pdf_timeline"),
     path("<str:id>/renda/gerar_pdf/<int:ano>", pdf_renda, name="pdf_renda"),
+    path("<str:id>/fluxo/gerar_pdf/<int:ano>", pdf_flow, name="pdf_flow"),
 ]
 
 if settings.DEBUG:
