@@ -1,6 +1,6 @@
 # pull official base image
 FROM python:3.11-slim-bookworm
-#FROM python
+
 # set work directory
 WORKDIR /app
 
@@ -9,7 +9,6 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install system dependencies
-#RUN apt-get update && apt-get install -y --fix-missing netcat-openbsd
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         netcat-openbsd \

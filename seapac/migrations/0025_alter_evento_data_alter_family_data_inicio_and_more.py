@@ -36,25 +36,21 @@ class Migration(migrations.Migration):
                 USING make_date(data, 1, 1);
             """,
         ),
-
         migrations.AlterField(
             model_name="evento",
             name="data",
             field=models.PositiveSmallIntegerField(),
         ),
-
         migrations.AlterField(
             model_name="family",
             name="data_inicio",
             field=models.PositiveSmallIntegerField(),
         ),
-
         migrations.AlterField(
             model_name="timelineevent",
             name="data",
             field=models.PositiveSmallIntegerField(),
         ),
-
         migrations.AlterField(
             model_name="timelineevent",
             name="secao",
