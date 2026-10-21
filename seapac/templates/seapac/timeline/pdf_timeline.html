@@ -8,11 +8,19 @@
     <link rel="stylesheet" href="{% static 'css/pdfs/timeline_pdf.css' %}">
 </head>
 <body>
-    
-    <div class="flow-header-main">
-        <h1 class='title'>{% block title %}Linha do tempo{% endblock title %}</h1>
-        <h2 class="name-family">{{ family.get_nome_familia }}</h2>
-    </div>
+    <header>
+        <img id="logo-seapac-pdf" src="{{ logo_path }}" alt="logo-seapac" height="120px">
+        <div>
+            <h1>Linha do tempo da {{ family.get_nome_familia }}</h1>
+            <h2>Titular: {{ family.nome_titular }}</h2>
+            <div>
+                <p class="sub meta-dados-pdf">Gerado em {% now "d/m/Y" %} às {% now "H:i" %} por <em>{{ user.get_full_name|default:user.username }}</em></p>
+                <address class="meta-dados-pdf">
+                    E-mail: seapacsistema@gmail.com
+                </address>
+            </div>
+        </div>
+    </header>
 
     {% if events %}
         <div class="sandbox" id="sandbox">

@@ -1,3 +1,7 @@
+* {
+    box-sizing: border-box;
+}
+
 :root {
     /* Colors */
     --primary-green: #2d5016;
@@ -62,13 +66,20 @@
 
 @page{
     size: A4 landscape;
-    margin: 1.5cm;
+    margin: 45mm 10mm 15mm 10mm;
 
     @bottom-right {
         content: "Página " counter(page);
         font-size: 9pt;
     }
+
+    @top-left {
+        content: element(cabecalho);
+        width: 277mm;
+    }
 }
+
+
 
 body {
     font-family: Arial, sans-serif;
@@ -76,6 +87,49 @@ body {
     color: #1e293b;
 }
 
+/* HEADER */
+
+header {
+  margin: 0;
+  padding: 0 40px 40px;
+  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #ccc; padding-bottom: 4px;  
+  height: fit-content;
+  width: 277mm; 
+
+  position: running(cabecalho);
+}
+
+header > div {
+  text-align: right;
+}
+
+#logo-seapac-pdf{
+  height: 120px;
+  max-height: 90%;
+}
+
+.meta-dados-pdf {
+  margin: 0;
+  text-decoration: none;
+  line-height: 18px;
+  font-size: 14px;
+}
+
+h1 { 
+  font-size: 24px; 
+  margin: 0 0 8px; 
+}
+
+h2 { 
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Pages content */
 .back-green {
     background-color: var(--more-light-green);
     margin: 0;
@@ -90,7 +144,8 @@ body {
 /* Cards de resumo */
 .card-renda {
     width: 90%;
-    margin: 2rem;
+    margin: auto;
+    margin-bottom: 2rem;
     padding: 0;
     border-radius: 24px;
     border: solid 1px var(--gray-400);
@@ -159,8 +214,11 @@ section.detalhamento-producao {
 }
 
 .detalhamento-producao h2.title {
-    font-size: var(--font-size-2x1);
+    font-size: 14pt;
     margin: 2rem 0 1rem;
+}
+.detalhamento-producao h2.title:first-child {
+    margin: 0 0 1rem;
 }
 
 .table {
@@ -203,10 +261,11 @@ section.detalhamento-producao {
     font-size: 0.9rem;
     line-height: 1.2rem;
     font-size: 10pt;
+    height: 48px;
     text-overflow: ellipsis;
 }
 
-.table th  small{
+.table th small{
     font-size: 10px;
 }
 

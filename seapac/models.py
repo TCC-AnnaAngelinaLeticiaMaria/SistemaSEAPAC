@@ -181,7 +181,6 @@ class FamilyRenda(models.Model):
                 receita_nao_monetaria = dados["valor_potencial"] * qtd_nao_vendida
 
                 receita_potencial = receita_nao_monetaria + (valor_unitario * qtd_vendida)
-                print(f"Receita potencial do {nome}: {receita_potencial}")
 
                 lucro_potencial = receita_potencial - custo_total
 

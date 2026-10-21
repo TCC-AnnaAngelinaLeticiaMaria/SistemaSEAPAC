@@ -54,6 +54,7 @@ from django.urls import reverse
 from django.views import View
 from django.db import transaction
 from weasyprint import HTML, CSS
+from pathlib import Path
 import pandas as pd
 import unicodedata
 import secrets
@@ -1389,17 +1390,22 @@ def relatorio_family_pdf(request, id):
 def pdf_timeline(request, id):
     family = get_object_or_404(Family, id=id)
     eventos = TimelineEvent.objects.filter(family=family).order_by("data", "id")
+    
+    logo_relativo = finders.find("img/logo-seapac.png")
+    logo_absoluto = Path(logo_relativo).resolve().as_uri()
 
-    html_txt = render(request, 'seapac/timeline/pdf_timeline.html', {'family': family, 'events': eventos}).content.decode("utf-8")
+    html_txt = render(request, 'seapac/timeline/pdf_timeline.html', {'family': family, 'events': eventos, "logo_path": logo_absoluto,}).content.decode("utf-8")
     css_path = finders.find('css/pdfs/timeline_pdf.css')
     pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
+
+    nome = slugify(family.nome_titular)
 
     response = HttpResponse(
         pdf,
         content_type='application/pdf',
     )
     response['Content-Disposition'] = (
-        f'attachment; filename="timeline{family.nome_titular}.pdf"'
+        f'attachment; filename="timeline--{nome}.pdf"'
     )
 
     return response
@@ -1411,6 +1417,8 @@ def pdf_renda(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
     resultado = renda.calcular_renda()
+    logo_relativo = finders.find("img/logo-seapac.png")
+    logo_absoluto = Path(logo_relativo).resolve().as_uri() #Transforma em caminho absoluto e deixa no modelo uri
 
     contexto = {
         "family": family,
@@ -1423,13 +1431,14 @@ def pdf_renda(request, id, ano):
         "renda_total_potencial": resultado["renda_total_potencial"],
         "title": f"Renda da ",
         "diferenca": resultado["diferenca"],
+        "logo_path": logo_absoluto,
     }
-
+    
     html_txt = render_to_string("seapac/pdfs/pdf_renda.html", contexto, request=request,)
     css_path = finders.find('css/pdfs/renda_pdf.css')
+    
     pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
 
-    from django.utils.text import slugify
     nome = slugify(family.nome_titular)
     response = HttpResponse(
         pdf,
