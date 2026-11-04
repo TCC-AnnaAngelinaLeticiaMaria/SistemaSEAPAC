@@ -26,6 +26,11 @@
                 <i class="fas fa-user-tie"></i>
                 <span>Técnicos</span>
             </a>
+
+            <a href="{% url 'cadastrar_tecnico' %}" class="link-cadastro nav-item {% if request.resolver_match.url_name == 'cadastrar_tecnico' %}active{% endif %}" data-page="tecnicos">
+                <b>+</b>
+                Cadastrar técnico
+            </a> 
         </nav>
         
         <div class="sidebar-footer">

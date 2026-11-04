@@ -1,13 +1,11 @@
 from .models import (
     Family,
     Subsystem,
-    Evento,
     Project,
     Technician,
     FamilySubsystem,
     TimelineEvent,
     Municipality,
-    Evento,
     FamilyRenda,
     Community,
     currentyear,
@@ -47,6 +45,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.forms import formset_factory
 from django.core.files.base import ContentFile
 from .utils.svg_converter import converter_svg
+from .utils.graficos import grafico_barrasVerticais, br_for_float, grafico_mix
 from django.core.files.storage import default_storage
 from django.conf import settings
 from django.contrib import messages
@@ -163,14 +162,6 @@ def dashboard(request):
     )
     total_families = Family.objects.count()
     total_tecnicos = Technician.objects.count()
-    #    total_avancado = len(
-    #        [f for f in Family.objects.all() if f.get_nivel() == "Avancado"]
-    #    )
-    #    total_intermediario = len(
-    #        [f for f in Family.objects.all() if f.get_nivel() == "Intermediario"]
-    #    )
-    #    total_inicial = len([f for f in Family.objects.all() if f.get_nivel() == "Inicial"])
-    total_visitas = Evento.objects.count()
 
     context = {
         "families": families,
@@ -178,7 +169,6 @@ def dashboard(request):
         "title": "Página Inicial - Dashboard",
         "query": query,
         "total_municipios": total_municipios,
-        "total_visitas": total_visitas,
         "total_tecnicos": total_tecnicos,
     }
     return render(request, "seapac/dashboard.html", context)
@@ -363,7 +353,55 @@ def register(request):
 @group_required("TECNICOS", "AGRICULTORES")
 def detail_family(request, id):
     family = get_object_or_404(Family, id=id)
-    context = {"family": family, "title": "Detalhes da "}
+    family_renda = list(FamilyRenda.objects.filter(family=family).order_by("ano"))
+
+    anos = []
+    rendas_monetarias = []
+    totais_nao_monetarios = []
+
+    for renda in family_renda:
+        renda.subsystems = FamilySubsystem.objects.filter(
+            family_renda=renda
+        ).select_related("subsystem")
+
+        resultado = renda.calcular_renda()
+        anos.append(renda.ano)
+        rendas_monetarias.append(br_for_float(resultado["renda_total"]))
+
+        total_qtd = 0
+        for fs in renda.subsystems:
+            for produto in fs.produtos_saida or []:
+                for fluxo in produto.get("fluxos", []):
+                    total_qtd += fluxo.get("qtd") or 0
+        totais_nao_monetarios.append(total_qtd)
+
+    grafico_nao_monetario = grafico_barrasVerticais(
+        anos,
+        totais_nao_monetarios,
+        titulo="Valores não monetários por ano",
+        ylabel="Quantidade",
+        cor="#4a7c59",
+    )
+
+    grafico_monetario = grafico_barrasVerticais(
+        anos,
+        rendas_monetarias,
+        titulo="Valores monetários por ano",
+        ylabel="Valor (R$)",
+        cor="#6ab04c",
+        prefixo="R$",
+    )
+
+    grafico_comparativo = grafico_mix(anos, rendas_monetarias, totais_nao_monetarios)
+
+    context = {
+        "family": family,
+        "title": "Detalhes da ",
+        "grafico_monetario": grafico_monetario,
+        "grafico_nao_monetario": grafico_nao_monetario,
+        "grafico_comparativo": grafico_comparativo,
+        "renda": len(family_renda),
+    }
     return render(request, "seapac/familias/detail_family.html", context)
 
 
@@ -1279,26 +1317,11 @@ def timeline(request, id):
     family = get_object_or_404(Family, id=id)
     timeline_events = family.timeline_events.all().order_by("data", "id")
 
-    #    secoes = {}
-    #    for evento in timeline_events:
-    #        if evento.secao not in secoes:
-    #            secoes[evento.secao] = []
-    #        secoes[evento.secao].append(evento)
-
-    #    conteudo_mermaid = "timeline\n"
-    #    for secao, eventos in secoes.items():
-    #        conteudo_mermaid += f"    section {secao}\n"
-    #        for evento in eventos:
-    #            conteudo_mermaid += (
-    #                f"        {evento.data} : {evento.titulo} - {evento.descricao}\n"
-    #            )
-
     context = {
         "id": id,
         "family": family,
         "events": timeline_events,
         "title": "Linha do Tempo",
-        #        "conteudo_mermaid": conteudo_mermaid,
     }
     return render(request, "seapac/timeline/timeline.html", context)
 
@@ -1398,17 +1421,60 @@ def search_timeline_event(request, id):
 @group_required("TECNICOS")
 def relatorio_family_pdf(request, id):
     family = get_object_or_404(Family, id=id)
-    family_renda = FamilyRenda.objects.filter(family=family)
+    family_renda = list(FamilyRenda.objects.filter(family=family).order_by("ano"))
+
+    anos = []
+    rendas_monetarias = []
+    totais_nao_monetarios = []
+
     for renda in family_renda:
         renda.subsystems = FamilySubsystem.objects.filter(
             family_renda=renda
         ).select_related("subsystem")
 
+        resultado = renda.calcular_renda()
+        anos.append(renda.ano)
+        rendas_monetarias.append(br_for_float(resultado["renda_total"]))
+
+        total_qtd = 0
+        for fs in renda.subsystems:
+            for produto in fs.produtos_saida or []:
+                for fluxo in produto.get("fluxos", []):
+                    total_qtd += fluxo.get("qtd") or 0
+        totais_nao_monetarios.append(total_qtd)
+
+    grafico_nao_monetario = grafico_barrasVerticais(
+        anos,
+        totais_nao_monetarios,
+        titulo="Valores não monetários por ano",
+        ylabel="Quantidade",
+        cor="#4a7c59",
+    )
+
+    grafico_monetario = grafico_barrasVerticais(
+        anos,
+        rendas_monetarias,
+        titulo="Valores monetários por ano",
+        ylabel="Valor (R$)",
+        cor="#6ab04c",
+        prefixo="R$",
+    )
+
+    grafico_comparativo = grafico_mix(anos, rendas_monetarias, totais_nao_monetarios)
+
     html_txt = render(
         request,
         "seapac/familias/pdf_familia.html",
-        {"family": family, "renda_familia": family_renda, "renda": renda},
+        {
+            "family": family,
+            "renda_familia": family_renda,
+            "grafico_monetario": grafico_monetario,
+            "grafico_nao_monetario": grafico_nao_monetario,
+            "grafico_comparativo": grafico_comparativo,
+            "renda": len(family_renda),
+        },
     ).content.decode("utf-8")
+
     css_path = finders.find("css/family_info_pdf.css")
     pdf = HTML(string=html_txt, base_url=request.build_absolute_uri("/")).write_pdf(
         stylesheets=[CSS(filename=css_path)]
@@ -1453,7 +1519,9 @@ def pdf_timeline(request, id):
         pdf,
         content_type="application/pdf",
     )
-    response["Content-Disposition"] = f'attachment; filename="timeline--{nome}.pdf"'
+    response['Content-Disposition'] = (
+        f'attachment; filename="timeline--{nome}.pdf"'
+    )
 
     return response
 

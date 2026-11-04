@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/detail-family.css' %}">
+{% endblock extra_head %}
 
 {% block center %}
 
@@ -18,7 +23,7 @@
                         Informações sobre a família cadastrada:
                     </p>
                 </div>
-                <div>
+                <div class="btns-family">
                     <a href="{% url 'edit_family' family.id %}" class="btn btn-primary" id="addProjectBtn">
                         <i class="fas fa-pencil-alt"></i> Editar
                     </a>
@@ -39,31 +44,46 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-lg-8" style="margin-bottom: 30px; width: 100%;">
             <div class="card">
                 <div class="card-header" style="color: rgb(231, 237, 231); background-color: rgb(39, 129, 39);">
                     <h5 class="mb-0"><i class="	fas fa-info-circle"></i> Informações</h5>
                 </div>
                 <div class="card-body">
                     <dl class="row">
-                        <dt class="col-sm-3">Nome da Família:</dt>
+                        <dt class="col-sm-3" style="width: 100%;">Nome da Família:</dt>
                         <dd class="col-sm-9 text-success">{{ family.get_nome_familia }}</dd>
                         
-                        <dt class="col-sm-3">Responsável:</dt>
+                        <dt class="col-sm-3" style="width: 100%;">Responsável:</dt>
                         <dd class="col-sm-9">{{ family.nome_titular}}</dd>
 
-                        <dt class="col-sm-3">Município:</dt>
+                        <dt class="col-sm-3" style="width: 100%;">Município:</dt>
                         <dd class="col-sm-9">{{ family.municipio }}</dd>
 
-                        <dt class="col-sm-3">Comunidade:</dt>
+                        <dt class="col-sm-3" style="width: 100%;">Comunidade:</dt>
                         <dd class="col-sm-9">{{ family.comunidade }}</dd>
                         
-                        <dt class="col-sm-3">Contato:</dt>
+                        <dt class="col-sm-3" style="width: 100%;">Contato:</dt>
                         <dd class="col-sm-9">{{ family.contato }}</dd>
                     </dl>
                 </div>
             </div>
         </div>
+        {% if not renda == 0 %}
+            <div class="grafico">
+                <div class="card-grafico">
+                    <div class="card-body"><img src="data:image/png;base64,{{ grafico_monetario }}" alt="grafico de valores monetários por ano"></div>
+                </div>
+
+                <div class="card-grafico">
+                    <div class="card-body"><img src="data:image/png;base64,{{ grafico_nao_monetario }}" alt="grafico de valores não monetários por ano"></div>
+                </div>
+
+                <div class="card-grafico">
+                    <div class="card-body"><img src="data:image/png;base64,{{ grafico_comparativo }}" alt="grafico comparativo de valores não monetários por ano"></div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 

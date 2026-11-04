@@ -1,8 +1,8 @@
 from django.db import models
 import os
 from django.conf import settings
-from PIL import Image
 from babel.numbers import format_decimal
+from PIL import Image
 from django.utils import timezone
 
 
@@ -33,13 +33,11 @@ class Municipality(models.Model):
 
 class Community(models.Model):
     nome_comunidade = models.CharField(max_length=100)
-    municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE, null=True)
+    municipio = models.ForeignKey(Municipality, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.nome_comunidade
 
-
-LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
 
 
 class FamilySubsystem(models.Model):
@@ -58,8 +56,8 @@ class Family(models.Model):
     nome_titular = models.CharField(max_length=100)
     data_inicio = models.PositiveSmallIntegerField(null=True)
     contato = models.CharField(max_length=30, unique=True, null=True)
-    municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE)
-    comunidade = models.ForeignKey(Community, on_delete=models.CASCADE, null=True)
+    municipio = models.ForeignKey(Municipality, on_delete=models.SET_NULL, null=True)
+    comunidade = models.ForeignKey(Community, on_delete=models.SET_NULL, null=True)
     projetos = models.ManyToManyField("Project", blank=True)
 
     def __str__(self):
@@ -77,9 +75,6 @@ class Family(models.Model):
             f"{fs.subsystem.nome_subsistema} ({len(fs.produtos_saida)} produtos)"
             for fs in FamilySubsystem.objects.filter(family_renda__family=self)
         )
-
-    def get_visitas_confirmadas(self):
-        return self.eventos.filter(confirmado=True).count()
 
 
 def currentyear():
@@ -224,6 +219,10 @@ class FamilyRenda(models.Model):
             "renda_total": self.formatar_valor(renda_total),
             "renda_total_potencial": self.formatar_valor(renda_total_potencial),
             "diferenca": self.formatar_valor(diferenca),
+            "brutos": {
+                "renda_total": float(renda_total),
+                "nao_monetario": float(diferenca),
+            },
         }
 
     def __str__(self):
@@ -314,24 +313,3 @@ class TimelineEvent(models.Model):
 
     def __str__(self):
         return f"{self.titulo} - {self.family.get_nome_familia()}"
-
-
-class Evento(models.Model):
-    titulo = models.CharField(max_length=200)
-    data = models.PositiveSmallIntegerField()
-
-    familia = models.ForeignKey(
-        Family, on_delete=models.CASCADE, related_name="eventos"
-    )
-
-    confirmado = models.BooleanField(default=False)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["familia", "data"], name="unique_evento_por_familia_e_dia"
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.familia} - {self.data}"
