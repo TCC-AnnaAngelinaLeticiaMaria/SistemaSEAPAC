@@ -1,9 +1,10 @@
 from django.db import models
 import os
 from django.conf import settings
-from PIL import Image
 from babel.numbers import format_decimal
+from PIL import Image
 from django.utils import timezone
+
 
 class Technician(models.Model):
     STATUS_CHOICES = [
@@ -29,14 +30,13 @@ class Municipality(models.Model):
     def __str__(self):
         return self.nome
 
+
 class Community(models.Model):
     nome_comunidade = models.CharField(max_length=100)
-    municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE, null=True)
+    municipio = models.ForeignKey(Municipality, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
-            return self.nome_comunidade
-
-LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
+        return self.nome_comunidade
 
 
 class FamilySubsystem(models.Model):
@@ -55,10 +55,10 @@ class Family(models.Model):
     nome_titular = models.CharField(max_length=100)
     data_inicio = models.PositiveSmallIntegerField(null=True)
     contato = models.CharField(max_length=30, unique=True, null=True)
-    municipio = models.ForeignKey(Municipality, on_delete=models.CASCADE)
-    comunidade = models.ForeignKey(Community, on_delete=models.CASCADE,  null=True)
+    municipio = models.ForeignKey(Municipality, on_delete=models.SET_NULL, null=True)
+    comunidade = models.ForeignKey(Community, on_delete=models.SET_NULL, null=True)
     projetos = models.ManyToManyField("Project", blank=True)
-    
+
     def __str__(self):
         return self.nome_titular
 
@@ -75,16 +75,15 @@ class Family(models.Model):
             for fs in FamilySubsystem.objects.filter(family_renda__family=self)
         )
 
-    def get_visitas_confirmadas(self):
-        return self.eventos.filter(confirmado=True).count()
-
 
 def currentyear():
-        return timezone.now().year
+    return timezone.now().year
+
 
 class FamilyRenda(models.Model):
     family = models.ForeignKey("Family", on_delete=models.CASCADE)
     ano = models.PositiveSmallIntegerField(default=currentyear, null=False)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -104,8 +103,7 @@ class FamilyRenda(models.Model):
         return family_subsystem
 
     def formatar_valor(self, valor):
-        return format_decimal(valor, locale='pt_BR', format='#,##0.00')
-
+        return format_decimal(valor, locale="pt_BR", format="#,##0.00")
 
     def calcular_renda(self):
         dados_produtos = []
@@ -143,9 +141,7 @@ class FamilyRenda(models.Model):
                     und = fluxo.get("und") or "Não definida"
 
                     produtos_dict[nome]["qtd_total"] += qtd
-                    produtos_dict[nome]["und"] = (
-                        und or produtos_dict[nome]["und"]
-                    )
+                    produtos_dict[nome]["und"] = und or produtos_dict[nome]["und"]
                     produtos_dict[nome]["valor_potencial"] = (
                         valor_potencial or produtos_dict[nome]["valor_potencial"]
                     )
@@ -158,11 +154,10 @@ class FamilyRenda(models.Model):
                         produtos_dict[nome]["receita_total"] += qtd * valor
                         produtos_dict[nome]["qtd_vendida"] += qtd
 
-
             for nome, dados in produtos_dict.items():
                 qtd_total = dados["qtd_total"]
                 qtd_vendida = dados["qtd_vendida"]
-                
+
                 und = dados["und"]
                 receita_real = dados["receita_total"]
                 valor_potencial = dados["valor_potencial"]
@@ -205,7 +200,7 @@ class FamilyRenda(models.Model):
                     }
                 )
 
-                total_receita += receita_real               
+                total_receita += receita_real
                 total_custo += custo_total
                 renda_total += lucro_real
                 total_receita_potencial += receita_potencial
@@ -218,13 +213,17 @@ class FamilyRenda(models.Model):
             "total_custo": self.formatar_valor(total_custo),
             "total_receita": self.formatar_valor(total_receita),
             "total_receita_potencial": self.formatar_valor(total_receita_potencial),
-            "renda_total":self.formatar_valor(renda_total),
+            "renda_total": self.formatar_valor(renda_total),
             "renda_total_potencial": self.formatar_valor(renda_total_potencial),
             "diferenca": self.formatar_valor(diferenca),
+            "brutos": {
+                "renda_total": float(renda_total),
+                "nao_monetario": float(diferenca),
+            },
         }
-    
+
     def __str__(self):
-        return f'{self.family.get_nome_familia()} - {self.ano}'
+        return f"{self.family.get_nome_familia()} - {self.ano}"
 
 
 class Subsystem(models.Model):
@@ -272,9 +271,6 @@ class Subsystem(models.Model):
                 img.save(caminho)
 
 
-
-
-
 class Project(models.Model):
     STATUS_CHOICES = [
         ("em-execucao", "Em Execução"),
@@ -302,10 +298,7 @@ class Project(models.Model):
 
 
 class TimelineEvent(models.Model):
-    TYPE_SECTION = [
-        ("mundo-externo", "Externo"),
-        ("mundo-interno", "Interno")
-    ]
+    TYPE_SECTION = [("mundo-externo", "Externo"), ("mundo-interno", "Interno")]
 
     family = models.ForeignKey(
         Family, on_delete=models.CASCADE, related_name="timeline_events"
@@ -317,24 +310,3 @@ class TimelineEvent(models.Model):
 
     def __str__(self):
         return f"{self.titulo} - {self.family.get_nome_familia()}"
-
-
-class Evento(models.Model):
-    titulo = models.CharField(max_length=200)
-    data = models.PositiveSmallIntegerField()
-
-    familia = models.ForeignKey(
-        Family, on_delete=models.CASCADE, related_name="eventos"
-    )
-
-    confirmado = models.BooleanField(default=False)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["familia", "data"], name="unique_evento_por_familia_e_dia"
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.familia} - {self.data}"

@@ -7,7 +7,6 @@ from .models import (
     FamilySubsystem,
     Project,
     TimelineEvent,
-    Evento,
     FamilyRenda,
 )
 
@@ -34,12 +33,14 @@ class TechnicianInline(admin.TabularInline):
     verbose_name = "Técnico no Projeto"
     verbose_name_plural = "Técnicos no Projeto"
 
+
 @admin.register(FamilyRenda)
 class FamilyRendaAdmin(admin.ModelAdmin):
     list_display = ("family", "ano")
     list_filter = ("ano",)
     search_fields = ("family__nome_titular",)
     inlines = [FamilySubsystemInline]
+
 
 @admin.register(Technician)
 class TechnicianAdmin(admin.ModelAdmin):
@@ -128,11 +129,3 @@ class TimelineEventAdmin(admin.ModelAdmin):
     list_filter = ("data",)
     search_fields = ("titulo", "descricao", "family__nome_titular")
     list_select_related = ("family",)
-
-
-@admin.register(Evento)
-class EventoAdmin(admin.ModelAdmin):
-    list_display = ("titulo", "familia", "data", "confirmado")
-    list_filter = ("confirmado",)
-    search_fields = ("titulo", "familia__nome_titular")
-    list_select_related = ("familia",)

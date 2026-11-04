@@ -345,7 +345,7 @@
     }
 
     .add-flow-group {
-        align-self: flex-end;
+        align-self: flex-start;
     }
 }
 
