@@ -1,6 +1,7 @@
 * {
     padding: 0;
     margin: 0;
+    box-sizing: border-box;
 }
 
 :root {
@@ -65,8 +66,18 @@
 }
 
 @page {
-    size: A4;
-    margin: 1.5cm;
+    size: A4 portrait;
+    margin: 45mm 15mm 15mm;
+
+    @bottom-right {
+        content: "Página " counter(page);
+        font-size: 9pt;
+    }
+
+    @top-left {
+        content: element(cabecalho);
+        width: 180mm;
+    }
 }
 
 body {
@@ -75,6 +86,51 @@ body {
     color: #1e293b;
     position: relative;
 }
+
+
+/* HEADER */
+
+header {
+  margin: 0;
+  padding: 0 0 40px;
+  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #ccc; padding-bottom: 4px;  
+  height: fit-content;
+  width: 180mm;
+
+  position: running(cabecalho);
+}
+
+header > div {
+  text-align: right;
+}
+
+#logo-seapac-pdf{
+  height: 120px;
+  max-height: 90%;
+}
+
+.meta-dados-pdf {
+  margin: 0;
+  text-decoration: none;
+  line-height: 18px;
+  font-size: 14px;
+}
+
+h1 { 
+  font-size: 24px; 
+  margin: 0 0 8px; 
+}
+
+h2 { 
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Pages content */
 
 .flow-header-main {
     text-align: center;
@@ -121,10 +177,6 @@ body {
     text-align: center;
 }
 
-@page {
-    size: A4;
-    margin: 1.5cm;
-}
 
 /* FLUXO */
 .sandbox {

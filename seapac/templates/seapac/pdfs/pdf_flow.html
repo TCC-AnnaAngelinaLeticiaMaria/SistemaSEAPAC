@@ -1,0 +1,60 @@
+{% load static %}
+{% load mermaid %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxo da família</title>
+<link rel="stylesheet" href="{% static 'css/pdfs/flow_pdf.css' %}">
+
+</head>
+<body>
+<div id="conteudo-pdf">
+    <header>
+        <img id="logo-seapac-pdf" src="{% static 'img/logo-seapac.png' %}" alt="logo-seapac" height="120px">
+        <div>
+            <h1>Fluxograma da {{ family.get_nome_familia }}</h1>
+            <h2>Titular: {{ family.nome_titular }}</h2>
+            <h2>Ano: {{ ano }}</h2>
+            <div id="meta-dados-pdf">
+                <p class="sub">Gerado em {% now "d/m/Y" %} às {% now "H:i" %} por <em>{{ user.get_full_name|default:user.username }}</em></p>
+                <address>
+                    E-mail: seapacsistema@gmail.com
+                </address>
+            </div>
+        </div>
+    </header>
+
+    <div id="conteudo-pagina">
+        
+        <div class="sandbox-wrapper" style="background-color: #f7f7f7ff;">
+        <div class="sandbox">
+            {% startmermaid %}
+                {{ conteudo_mermaid|safe }}
+            {% endmermaid %}
+        </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener("load", async () => {
+      // Se o django-mermaid usa mermaid.initialize({startOnLoad:true}),
+      // espere o SVG existir:
+      const esperar = () => new Promise(res => {
+        const check = () => {
+          const todos = document.querySelectorAll(".mermaid");
+          const prontos = [...todos].every(el => el.querySelector("svg"));
+          prontos ? res() : setTimeout(check, 100);
+        };
+        check();
+      });
+      await esperar();
+      window.parent.postMessage({ tipo: "mermaid-pronto" }, window.location.origin);
+    });
+</script>
+
+</body>
+</html>

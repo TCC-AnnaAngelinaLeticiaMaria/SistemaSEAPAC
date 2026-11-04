@@ -80,6 +80,17 @@
     font-weight: 700;
 }
 
+/* "Cabeçalho" */
+.renda-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.renda-header .btn {
+    display: block;
+    height: fit-content;
+    width: fit-content;
+}
 
 /* Cards de resumo */
 

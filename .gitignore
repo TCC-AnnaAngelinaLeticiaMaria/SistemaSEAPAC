@@ -6,6 +6,13 @@ __pycache__
 db.sqlite3
 media
 
+# JS
+node_modules/
+
+# dependences of JS as json
+package.json
+package-lock.json
+
 # Backup files # 
 *.bak 
 
