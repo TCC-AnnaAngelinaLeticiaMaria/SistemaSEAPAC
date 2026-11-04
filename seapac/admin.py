@@ -34,12 +34,14 @@ class TechnicianInline(admin.TabularInline):
     verbose_name = "Técnico no Projeto"
     verbose_name_plural = "Técnicos no Projeto"
 
+
 @admin.register(FamilyRenda)
 class FamilyRendaAdmin(admin.ModelAdmin):
     list_display = ("family", "ano")
     list_filter = ("ano",)
     search_fields = ("family__nome_titular",)
     inlines = [FamilySubsystemInline]
+
 
 @admin.register(Technician)
 class TechnicianAdmin(admin.ModelAdmin):

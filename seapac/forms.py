@@ -8,13 +8,15 @@ import re
 import json
 import os
 
-#----------------------------
+
+# ----------------------------
 # IMPORTAR PLANILHA
 # ---------------------------
 class ImportarPlanilha(forms.Form):
     arquivo = forms.FileField()
 
-#----------------------------
+
+# ----------------------------
 # PROJECT
 # ---------------------------
 class ProjectForm(ModelForm):
@@ -156,34 +158,45 @@ class FamilyForm(ModelForm):
                 attrs={"class": "form-control", "placeholder": "Nome do titular"}
             ),
             "data_inicio": forms.NumberInput(
-                attrs={"class": "form-control", "type": "number", "min": "1993", "max": date.today().year, "placeholder": "Ano de início"}
+                attrs={
+                    "class": "form-control",
+                    "type": "number",
+                    "min": "1993",
+                    "max": date.today().year,
+                    "placeholder": "Ano de início",
+                }
             ),
             "contato": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "Telefone ou e-mail"}
             ),
-            "municipio": forms.Select(attrs={"class": "form-control", "id": "municipio"}),
-            "comunidade": forms.Select(attrs={"class": "form-control", "id": "comunidade"}),
+            "municipio": forms.Select(
+                attrs={"class": "form-control", "id": "municipio"}
+            ),
+            "comunidade": forms.Select(
+                attrs={"class": "form-control", "id": "comunidade"}
+            ),
             "projetos": forms.SelectMultiple(
                 attrs={"class": "form-control", "size": 14}
             ),
         }
 
     def clean_contato(self):
-        contato = self.cleaned_data['contato']
+        contato = self.cleaned_data["contato"]
 
-        contato = re.sub(r'/D', '', str(contato))
+        contato = re.sub(r"/D", "", str(contato))
 
         if len(contato) != 11:
             raise forms.ValidationError(
-                'O telefone deve possuir 11 números, incluindo o DDD.'
+                "O telefone deve possuir 11 números, incluindo o DDD."
             )
 
         if Family.objects.filter(contato=contato).exists():
             raise forms.ValidationError(
-                'Já existe alguém cadastrado com esse número de telefone!'
+                "Já existe alguém cadastrado com esse número de telefone!"
             )
-        
+
         return contato
+
 
 class FamilyEditForm(FamilyForm):
 
@@ -386,24 +399,25 @@ class SubsystemForm(ModelForm):
             parsed = json.loads(data)
             if not isinstance(parsed, list):
                 raise forms.ValidationError(
-                    'Os produtos devem estar em formato de lista'
+                    "Os produtos devem estar em formato de lista"
                 )
             return parsed
-        
+
         except json.JSONDecodeError:
             raise forms.ValidationError(
                 "JSON inválido. Use uma lista ou uma linha por produto."
             )
+
 
 class SubsystemEditForm(SubsystemForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.produtos_base:
-            self.initial['produtos_base'] = json.dumps(
-                self.instance.produtos_base,
-                ensure_ascii=False
+            self.initial["produtos_base"] = json.dumps(
+                self.instance.produtos_base, ensure_ascii=False
             )
+
 
 # ---------------------------
 # TIMELINE EVENT
@@ -420,7 +434,15 @@ class TimelineEventForm(ModelForm):
         }
         widgets = {
             "titulo": forms.TextInput(attrs={"class": "form-control"}),
-            "data": forms.NumberInput(attrs={"class": "form-control", "type": "number", "min": "1993", "max": date.today().year, "placeholder": "Ano de início"}),
+            "data": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "number",
+                    "min": "1993",
+                    "max": date.today().year,
+                    "placeholder": "Ano de início",
+                }
+            ),
             "descricao": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
             "secao": forms.Select(attrs={"class": "form-control"}),
         }
@@ -463,7 +485,7 @@ class TimelineEventEditForm(forms.ModelForm):
                     "type": "number",
                     "min": "1993",
                     "max": date.today().year,
-                    "placeholder": "Ano de início"
+                    "placeholder": "Ano de início",
                 }
             ),
         }
