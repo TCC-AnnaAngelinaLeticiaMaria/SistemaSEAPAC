@@ -39,7 +39,6 @@ class Community(models.Model):
         return self.nome_comunidade
 
 
-
 class FamilySubsystem(models.Model):
     subsystem = models.ForeignKey("Subsystem", on_delete=models.CASCADE)
     family_renda = models.ForeignKey("FamilyRenda", on_delete=models.CASCADE, null=True)

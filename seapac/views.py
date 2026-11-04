@@ -1519,9 +1519,7 @@ def pdf_timeline(request, id):
         pdf,
         content_type="application/pdf",
     )
-    response['Content-Disposition'] = (
-        f'attachment; filename="timeline--{nome}.pdf"'
-    )
+    response["Content-Disposition"] = f'attachment; filename="timeline--{nome}.pdf"'
 
     return response
 
