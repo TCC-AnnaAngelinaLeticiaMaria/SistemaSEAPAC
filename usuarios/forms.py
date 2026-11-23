@@ -66,19 +66,24 @@ class TecnicoCreationForm(UserCreationForm):
 
         return re.sub(r"\D", "", cpf)
 
+
 class AgricultorLoginForm(AuthenticationForm):
     username = forms.CharField(
         label="Número de telefone",
-        widget= forms.TextInput(
-            attrs={'class': 'form-control', 'placeholder': 'Ex.: 84999999999'}
-        )
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Ex.: 84999999999"}
+        ),
     )
     password = forms.CharField(
         label="Senha",
         widget=forms.PasswordInput(
-            attrs={'class': 'form-control', 'placeholder': 'Mínimo de 6 letras e/ou números'}
-        )
+            attrs={
+                "class": "form-control",
+                "placeholder": "Mínimo de 6 letras e/ou números",
+            }
+        ),
     )
+
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -91,6 +96,7 @@ class LoginForm(AuthenticationForm):
             attrs={"class": "form-control", "placeholder": "Senha"}
         )
     )
+
 
 class PerfilTecnicoForm(forms.ModelForm):
     nome_cidade = forms.ModelChoiceField(
@@ -162,6 +168,7 @@ class PerfilTecnicoForm(forms.ModelForm):
             raise forms.ValidationError("O arquivo enviado não é uma imagem válida.")
 
         return foto
+
 
 class TecnicoFiltroForm(forms.Form):
 

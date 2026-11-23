@@ -25,6 +25,7 @@ class TecnicoAdmin(UserAdmin):
         ),
     )
 
+
 @admin.register(Agricultor)
 class AgricultorAdmin(admin.ModelAdmin):
     list_display = (
@@ -33,8 +34,8 @@ class AgricultorAdmin(admin.ModelAdmin):
         "primeiro_acesso",
     )
 
-    @admin.display(description='Nome de Titular')
+    @admin.display(description="Nome de Titular")
     def nome_titular(self, object):
         if object.familia:
             return object.familia.nome_titular
-        return '-'
+        return "-"

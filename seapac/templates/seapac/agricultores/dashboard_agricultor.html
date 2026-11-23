@@ -14,36 +14,83 @@
     </div>
 
     <div class="stats-grid ">
-        <a class="stat-card" href="{% url 'listar_fluxos' %}">
-            <div class="stat-icon agricultores-cards">
-                <img src="{% static 'img/fluxos-icon.png' %}" alt="">
+        
+        <!-- <div > -->
+            <div class="stat-card">
+                <div class="stat-icon agricultores-cards">
+                    <img src="{% static 'img/fluxos-icon.png' %}" alt="">
+                    <button class="btn-speak" id="ouvir1" aria-label="Ouvir conteúdo">
+                        <span class="material-symbols-outlined">
+                            volume_up
+                        </span>
+                    </button>
+                </div>
+                <div class="stat-content" id="conteudo1">
+                    <h2><a href="{% url 'listar_fluxos' %}" class="card-link">Meus Fluxos produtivos</a></h2>
+                    <p>Fluxo produtivo é o caminho que cada parte da produção faz dentro da sua fazenda</p>
+                </div>
+            
             </div>
-            <div class="stat-content">
-                <h2>Meus Fluxos produtivos</h2>
-                <p>Fluxo produtivo é o caminho que cada parte da produção faz dentro da sua fazenda</p>
-            </div>
-        </a>
+        <!-- </div>
 
-        <a class="stat-card" href="{% url 'subsistemas_agricultor' %}">
-            <div class="stat-icon agricultores-cards">
-                <img src="{% static 'img/subsistemas-icon.png' %}" alt="">
+        <div> -->
+            <div class="stat-card">
+                <div class="stat-icon agricultores-cards">
+                    <img src="{% static 'img/subsistemas-icon.png' %}" alt="">
+                    <button class="btn-speak" id="ouvir2" aria-label="Ouvir conteúdo">
+                        <span class="material-symbols-outlined">
+                            volume_up
+                        </span>
+                    </button>
+                </div>
+                <div class="stat-content" id="conteudo2">
+                    <h2><a href="{% url 'subsistemas_agricultor' %}" class="card-link">Meus subsistemas</a></h2>
+                    <p>Diferentes partes da produção </p>
+                </div>
             </div>
-            <div class="stat-content">
-                <h2>Meus subsistemas</h2>
-                <p>Diferentes partes da produção </p>
-            </div>
-        </a>
+            
+        <!-- </div> -->
 
-        <a class="stat-card" href="{% url 'timeline_agricultor' user.id %}">
-            <div class="stat-icon agricultores-cards">
-                <img src="{% static 'img/linhatempo-icon.png' %}" alt="">
+        <!-- <div> -->
+            <div class="stat-card">
+                <div class="stat-icon agricultores-cards">
+                    <img src="{% static 'img/linhatempo-icon.png' %}" alt="">
+                    <button class="btn-speak" id="ouvir3" aria-label="Ouvir conteúdo">
+                        <span class="material-symbols-outlined">
+                            volume_up
+                        </span>
+                    </button>
+                </div>
+                <div class="stat-content" id="conteudo3">
+                    <h2><a href="{% url 'timeline_agricultor' user.id %}" class="card-link">Linha do tempo</a></h2>
+                    <p>Uma linha do tempo organiza os acontecimentos da sua fazenda em ordem</p>
+                </div>
             </div>
-            <div class="stat-content">
-                <h2>Linha do tempo</h2>
-                <p>Uma linha do tempo organiza os acontecimentos da sua fazenda em ordem</p>
-            </div>
-        </a>
+        <!-- </div> -->
 
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+function falarSpeech(idConteudo) {
+  window.speechSynthesis.cancel(); // evita sobreposição
+  const texto = document.getElementById(idConteudo).innerText;
+  const fala = new SpeechSynthesisUtterance(texto);
+  fala.lang = 'pt-BR';
+  fala.rate = 1;
+  window.speechSynthesis.speak(fala);
+}
+
+document.getElementById('ouvir1').addEventListener('click', () => {
+    falarSpeech('conteudo1');
+});
+document.getElementById('ouvir2').addEventListener('click', () => { 
+    falarSpeech('conteudo2');
+});
+document.getElementById('ouvir3').addEventListener('click', () => {
+    falarSpeech('conteudo3');
+});
+</script>
+{% endblock extra_js %}

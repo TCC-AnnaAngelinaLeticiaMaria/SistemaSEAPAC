@@ -1,13 +1,11 @@
 from .models import (
     Family,
     Subsystem,
-    Evento,
     Project,
     Technician,
     FamilySubsystem,
     TimelineEvent,
     Municipality,
-    Evento,
     FamilyRenda,
     Community,
     currentyear,
@@ -35,7 +33,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.template.loader import render_to_string
 from django.utils.dateparse import parse_datetime
+from django.utils.text import slugify
 from django.core.paginator import Paginator
 from .mixins import GroupRequireMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -52,6 +53,7 @@ from django.urls import reverse
 from django.views import View
 from django.db import transaction
 from weasyprint import HTML, CSS
+from pathlib import Path
 import pandas as pd
 import unicodedata
 import secrets
@@ -60,113 +62,106 @@ import re
 import os
 
 FOTOS_PRODUTOS = {
-    "Carne": 'img/subsystem_products/carne.svg',
-    "Esterco": 'img/subsystem_products/esterco.svg',
-    "Animais para reprodução": 'img/subsystem_products/animais_para_reproducao.svg',
-    "Couro": 'img/subsystem_products/couro.svg',
-    "Pinto": 'img/subsystem_products/pinto.svg',
-    "Carne de aves": 'img/subsystem_products/carne_de_aves.svg',
-    "Ovo": 'img/subsystem_products/ovo.svg',
-    "Aves vivas": 'img/subsystem_products/aves_vivas.svg',
-    "Leite": 'img/subsystem_products/leite.svg',
-    "Touro": 'img/subsystem_products/touro.svg',
-    "Banana": 'img/subsystem_products/banana.svg',
-    "Acerola": 'img/subsystem_products/acerola.svg',
-    "Pinha": 'img/subsystem_products/pinha.svg',
-    "Graviola": 'img/subsystem_products/graviola.svg',
-    "Caju": 'img/subsystem_products/caju.svg',
-    "Goiaba": 'img/subsystem_products/goiaba.svg',
-    "Hortaliça": 'img/subsystem_products/hortalica.svg',
-    "Forragem": 'img/subsystem_products/forragem.svg',
-    "Mel": 'img/subsystem_products/mel.svg',
-    "Cera": 'img/subsystem_products/cera.svg',
-    "Geleia real": 'img/subsystem_products/geleia_real.svg',
-    "Própolis": 'img/subsystem_products/propolis.svg',
-    "Enxames": 'img/subsystem_products/enxames.svg',
-    "Coentro": 'img/subsystem_products/coentro.svg',
-    "Cebolinha": 'img/subsystem_products/cebolinha.svg',
-    "Pimentão": 'img/subsystem_products/pimentao.svg',
-    "Tomate": 'img/subsystem_products/tomate.svg',
-    "Tomate cereja": 'img/subsystem_products/tomate_cereja.svg',
-    "Beringela": 'img/subsystem_products/beringela.svg',
-    "Pimenta de cheiro": 'img/subsystem_products/pimenta_de_cheiro.svg',
-    "Repolho": 'img/subsystem_products/repolho.svg',
-    "Mamão": 'img/subsystem_products/mamao.svg',
-    "Coco": 'img/subsystem_products/coco.svg',
-    "Limão": 'img/subsystem_products/limao.svg',
-    "Milho": 'img/subsystem_products/milho.svg',
-    "Feijão": 'img/subsystem_products/feijao.svg',
-    "Jerimum": 'img/subsystem_products/jerimum.svg',
-    "Melancia": 'img/subsystem_products/melancia.svg',
-    "Feijão guandu": 'img/subsystem_products/feijao_guandu.svg',
-    "Fava": 'img/subsystem_products/fava.svg',
-    "Arroz": 'img/subsystem_products/arroz.svg',
-    "Amendoim": 'img/subsystem_products/amendoim.svg',
-    "Palma": 'img/subsystem_products/palma.svg',
-    "Moringa": 'img/subsystem_products/moringa.svg',
-    "Leucena": 'img/subsystem_products/leucena.svg',
-    "Gliricídia": 'img/subsystem_products/gliricidia.svg',
-    "Margaridão": 'img/subsystem_products/margaridao.svg',
-    "Capiaçu": 'img/subsystem_products/capiacu.svg',
-    "Hortelã": 'img/subsystem_products/hortela.svg',
-    "Cidreira": 'img/subsystem_products/cidreira.svg',
-    "Capim santo": 'img/subsystem_products/capim_santo.svg',
-    "Urucum": 'img/subsystem_products/urucum.svg',
-    "Tilápia": 'img/subsystem_products/tilapia.svg',
-    "Tambaqui": 'img/subsystem_products/tambaqui.svg',
-    "Camarão": 'img/subsystem_products/camarao.svg',
-    "Tulipa": 'img/subsystem_products/tulipa.svg',
-    "Composto orgânico": 'img/subsystem_products/composto_organico.svg',
-    "Biofertilizante": 'img/subsystem_products/biofertilizante.svg',
-    "EM4": 'img/subsystem_products/em4.svg',
-    "Doces": 'img/subsystem_products/doces.svg',
-    "Bolos": 'img/subsystem_products/bolos.svg',
-    "Queijos": 'img/subsystem_products/queijos.svg',
-    "Água para beber e cozinhar": 'img/subsystem_products/agua.svg',
-    "Água para produção": 'img/subsystem_products/agua_para_producao.svg',
-    "Água para o multiuso da UPF": 'img/subsystem_products/agua_para_multiuso.svg',
-    "Água para os animais": 'img/subsystem_products/agua_para_os_animais.svg',
-    "Biogás": 'img/subsystem_products/biogas.svg',
-    "Feno": 'img/subsystem_products/feno.svg',
-    "Semente": 'img/subsystem_products/semente.svg',
-    "Fruta desidratada": 'img/subsystem_products/fruta_desidratada.svg',
+    "Carne": "img/subsystem_products/carne.svg",
+    "Esterco": "img/subsystem_products/esterco.svg",
+    "Animais para reprodução": "img/subsystem_products/animais_para_reproducao.svg",
+    "Couro": "img/subsystem_products/couro.svg",
+    "Pinto": "img/subsystem_products/pinto.svg",
+    "Carne de aves": "img/subsystem_products/carne_de_aves.svg",
+    "Ovo": "img/subsystem_products/ovo.svg",
+    "Aves vivas": "img/subsystem_products/aves_vivas.svg",
+    "Leite": "img/subsystem_products/leite.svg",
+    "Touro": "img/subsystem_products/touro.svg",
+    "Banana": "img/subsystem_products/banana.svg",
+    "Acerola": "img/subsystem_products/acerola.svg",
+    "Pinha": "img/subsystem_products/pinha.svg",
+    "Graviola": "img/subsystem_products/graviola.svg",
+    "Caju": "img/subsystem_products/caju.svg",
+    "Goiaba": "img/subsystem_products/goiaba.svg",
+    "Hortaliça": "img/subsystem_products/hortalica.svg",
+    "Forragem": "img/subsystem_products/forragem.svg",
+    "Mel": "img/subsystem_products/mel.svg",
+    "Cera": "img/subsystem_products/cera.svg",
+    "Geleia real": "img/subsystem_products/geleia_real.svg",
+    "Própolis": "img/subsystem_products/propolis.svg",
+    "Enxames": "img/subsystem_products/enxames.svg",
+    "Coentro": "img/subsystem_products/coentro.svg",
+    "Cebolinha": "img/subsystem_products/cebolinha.svg",
+    "Pimentão": "img/subsystem_products/pimentao.svg",
+    "Tomate": "img/subsystem_products/tomate.svg",
+    "Tomate cereja": "img/subsystem_products/tomate_cereja.svg",
+    "Beringela": "img/subsystem_products/beringela.svg",
+    "Pimenta de cheiro": "img/subsystem_products/pimenta_de_cheiro.svg",
+    "Repolho": "img/subsystem_products/repolho.svg",
+    "Mamão": "img/subsystem_products/mamao.svg",
+    "Coco": "img/subsystem_products/coco.svg",
+    "Limão": "img/subsystem_products/limao.svg",
+    "Milho": "img/subsystem_products/milho.svg",
+    "Feijão": "img/subsystem_products/feijao.svg",
+    "Jerimum": "img/subsystem_products/jerimum.svg",
+    "Melancia": "img/subsystem_products/melancia.svg",
+    "Feijão guandu": "img/subsystem_products/feijao_guandu.svg",
+    "Fava": "img/subsystem_products/fava.svg",
+    "Arroz": "img/subsystem_products/arroz.svg",
+    "Amendoim": "img/subsystem_products/amendoim.svg",
+    "Palma": "img/subsystem_products/palma.svg",
+    "Moringa": "img/subsystem_products/moringa.svg",
+    "Leucena": "img/subsystem_products/leucena.svg",
+    "Gliricídia": "img/subsystem_products/gliricidia.svg",
+    "Margaridão": "img/subsystem_products/margaridao.svg",
+    "Capiaçu": "img/subsystem_products/capiacu.svg",
+    "Hortelã": "img/subsystem_products/hortela.svg",
+    "Cidreira": "img/subsystem_products/cidreira.svg",
+    "Capim santo": "img/subsystem_products/capim_santo.svg",
+    "Urucum": "img/subsystem_products/urucum.svg",
+    "Tilápia": "img/subsystem_products/tilapia.svg",
+    "Tambaqui": "img/subsystem_products/tambaqui.svg",
+    "Camarão": "img/subsystem_products/camarao.svg",
+    "Tulipa": "img/subsystem_products/tulipa.svg",
+    "Composto orgânico": "img/subsystem_products/composto_organico.svg",
+    "Biofertilizante": "img/subsystem_products/biofertilizante.svg",
+    "EM4": "img/subsystem_products/em4.svg",
+    "Doces": "img/subsystem_products/doces.svg",
+    "Bolos": "img/subsystem_products/bolos.svg",
+    "Queijos": "img/subsystem_products/queijos.svg",
+    "Água para beber e cozinhar": "img/subsystem_products/agua.svg",
+    "Água para produção": "img/subsystem_products/agua_para_producao.svg",
+    "Água para o multiuso da UPF": "img/subsystem_products/agua_para_multiuso.svg",
+    "Água para os animais": "img/subsystem_products/agua_para_os_animais.svg",
+    "Biogás": "img/subsystem_products/biogas.svg",
+    "Feno": "img/subsystem_products/feno.svg",
+    "Semente": "img/subsystem_products/semente.svg",
+    "Fruta desidratada": "img/subsystem_products/fruta_desidratada.svg",
 }
 
 FOTO_SUBSYS = {
-    "UFPA": 'img/fotos_subsistemas/UFPA.svg',
-    "Mercado Externo": 'img/fotos_subsistemas/mercado_externo.svg'
+    "UFPA": "img/fotos_subsistemas/UFPA.svg",
+    "Mercado Externo": "img/fotos_subsistemas/mercado_externo.svg",
 }
 
-#**********************************
-#*************TÉCNICOS*************
-#**********************************
+# **********************************
+# *************TÉCNICOS*************
+# **********************************
 
 LEVEL_CHOICES = [(1, "Inicial"), (2, "Intermediario"), (3, "Avancado")]
+
 
 # --------------DASHBOARD--------------
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def dashboard(request):
     level = request.GET.get("nivel")
     query = request.GET.get("q")
     families = Family.objects.all()
     if query:
         families = families.filter(nome_titular__icontains=query)
-    
+
     total_municipios = (
         Municipality.objects.filter(family__isnull=False).distinct().count()
     )
     total_families = Family.objects.count()
     total_tecnicos = Technician.objects.count()
-#    total_avancado = len(
-#        [f for f in Family.objects.all() if f.get_nivel() == "Avancado"]
-#    )
-#    total_intermediario = len(
-#        [f for f in Family.objects.all() if f.get_nivel() == "Intermediario"]
-#    )
-#    total_inicial = len([f for f in Family.objects.all() if f.get_nivel() == "Inicial"])
-    total_visitas = Evento.objects.count()
 
     context = {
         "families": families,
@@ -174,7 +169,6 @@ def dashboard(request):
         "title": "Página Inicial - Dashboard",
         "query": query,
         "total_municipios": total_municipios,
-        "total_visitas": total_visitas,
         "total_tecnicos": total_tecnicos,
     }
     return render(request, "seapac/dashboard.html", context)
@@ -182,13 +176,17 @@ def dashboard(request):
 
 # --------------CRUD FAMILIAS (COMPLETO)--------------
 
+
 def normalizarColunas(coluna_nome):
-        coluna_nome = str(coluna_nome).strip().lower()
+    coluna_nome = str(coluna_nome).strip().lower()
 
-        coluna_nome = unicodedata.normalize('NFKD', coluna_nome)
-        coluna_nome = ''.join(caractere for caractere in coluna_nome if not unicodedata.combining(caractere))
+    coluna_nome = unicodedata.normalize("NFKD", coluna_nome)
+    coluna_nome = "".join(
+        caractere for caractere in coluna_nome if not unicodedata.combining(caractere)
+    )
 
-        return ' '.join(coluna_nome.split())
+    return " ".join(coluna_nome.split())
+
 
 def normalizar_contato(contato):
     if pd.isna(contato):
@@ -209,6 +207,7 @@ def normalizar_contato(contato):
 
     return contato
 
+
 def verificarCampos(dataFrame, campos):
     colunas = {}
 
@@ -222,13 +221,18 @@ def verificarCampos(dataFrame, campos):
 
     return None
 
+
 class ImportarDadosExcel(LoginRequiredMixin, GroupRequireMixin, View):
-    allowed_groups = ['TECNICOS']
+    allowed_groups = ["TECNICOS"]
 
     def get(self, request):
         familia = Family.objects.all()
-        form =  ImportarPlanilha()
-        return render(request, "seapac/familias/importardados.html", {'form': form, 'familia': familia})
+        form = ImportarPlanilha()
+        return render(
+            request,
+            "seapac/familias/importardados.html",
+            {"form": form, "familia": familia},
+        )
 
     def post(self, request):
 
@@ -236,19 +240,23 @@ class ImportarDadosExcel(LoginRequiredMixin, GroupRequireMixin, View):
 
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = 'Informações de login das famílias'
+        ws.title = "Informações de login das famílias"
 
-        ws.append(['Nome do Titular', 'Contato', 'Senha'])
+        ws.append(["Nome do Titular", "Contato", "Senha"])
 
         if form.is_valid():
-            arq = request.FILES['arquivo']
+            arq = request.FILES["arquivo"]
             dataFrame = pd.read_excel(arq)
 
-            campo_nome = verificarCampos(dataFrame, ['Nome Completo', 'Nome', 'Nome do Titular'])
+            campo_nome = verificarCampos(
+                dataFrame, ["Nome Completo", "Nome", "Nome do Titular"]
+            )
 
-            campo_contato = verificarCampos(dataFrame, ['Telefone', 'Celular', 'Contato'])
+            campo_contato = verificarCampos(
+                dataFrame, ["Telefone", "Celular", "Contato"]
+            )
 
-            campo_municipio = verificarCampos(dataFrame, ['Município', 'Municipio'])
+            campo_municipio = verificarCampos(dataFrame, ["Município", "Municipio"])
 
             with transaction.atomic():
 
@@ -261,17 +269,17 @@ class ImportarDadosExcel(LoginRequiredMixin, GroupRequireMixin, View):
                     )
 
                     comunidade, created2 = Community.objects.get_or_create(
-                        nome_comunidade=row['Comunidade'],
+                        nome_comunidade=row["Comunidade"],
                         municipio=municipio,
                     )
 
                     familia, created3 = Family.objects.get_or_create(
-                        nome_titular= row[campo_nome],
-                        municipio= municipio, 
+                        nome_titular=row[campo_nome],
+                        municipio=municipio,
                         defaults={
-                            'contato': contato,
-                            'comunidade': comunidade,
-                        }
+                            "contato": contato,
+                            "comunidade": comunidade,
+                        },
                     )
 
                     if created3 and familia.contato:
@@ -279,28 +287,32 @@ class ImportarDadosExcel(LoginRequiredMixin, GroupRequireMixin, View):
                         agricultor = Agricultor.objects.create_user(
                             username=familia.contato,
                             password=senha_temporaria,
-                            familia=familia
+                            familia=familia,
                         )
-            
-                        grupo, _ = Group.objects.get_or_create(name='AGRICULTORES')
+
+                        grupo, _ = Group.objects.get_or_create(name="AGRICULTORES")
                         agricultor.groups.add(grupo)
 
-                        ws.append([familia.nome_titular, familia.contato, senha_temporaria])
+                        ws.append(
+                            [familia.nome_titular, familia.contato, senha_temporaria]
+                        )
 
             response = HttpResponse(
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-            response['Content-Disposition'] = 'attachment; filename=Credenciais_temporarias_agricultores.xlsx'
+            response["Content-Disposition"] = (
+                "attachment; filename=Credenciais_temporarias_agricultores.xlsx"
+            )
 
             wb.save(response)
 
             return response
-        return render(request, "seapac/familias/importardados.html", {'form': form})
+        return render(request, "seapac/familias/importardados.html", {"form": form})
 
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def register(request):
 
     if request.method == "POST":
@@ -313,12 +325,10 @@ def register(request):
 
                 senha_temporaria = secrets.token_urlsafe(8)
                 agricultor = Agricultor.objects.create_user(
-                    username=family.contato,
-                    password=senha_temporaria,
-                    familia=family
+                    username=family.contato, password=senha_temporaria, familia=family
                 )
 
-                grupo, _ = Group.objects.get_or_create(name='AGRICULTORES')
+                grupo, _ = Group.objects.get_or_create(name="AGRICULTORES")
                 agricultor.groups.add(grupo)
 
             return render(
@@ -327,7 +337,7 @@ def register(request):
                 {
                     "familia": family,
                     "senha_temporaria": senha_temporaria,
-                }
+                },
             )
     else:
         form = FamilyForm()
@@ -340,11 +350,11 @@ def register(request):
 
 @never_cache
 @login_required
-@group_required('TECNICOS', 'AGRICULTORES')
+@group_required("TECNICOS", "AGRICULTORES")
 def detail_family(request, id):
     family = get_object_or_404(Family, id=id)
-    family_renda = list(FamilyRenda.objects.filter(family=family).order_by('ano'))
-    
+    family_renda = list(FamilyRenda.objects.filter(family=family).order_by("ano"))
+
     anos = []
     rendas_monetarias = []
     totais_nao_monetarios = []
@@ -352,36 +362,52 @@ def detail_family(request, id):
     for renda in family_renda:
         renda.subsystems = FamilySubsystem.objects.filter(
             family_renda=renda
-        ).select_related('subsystem')
+        ).select_related("subsystem")
 
         resultado = renda.calcular_renda()
         anos.append(renda.ano)
-        rendas_monetarias.append(br_for_float(resultado['renda_total']))
+        rendas_monetarias.append(br_for_float(resultado["renda_total"]))
 
         total_qtd = 0
         for fs in renda.subsystems:
             for produto in fs.produtos_saida or []:
-                for fluxo in produto.get('fluxos', []):
-                    total_qtd += fluxo.get('qtd') or 0
+                for fluxo in produto.get("fluxos", []):
+                    total_qtd += fluxo.get("qtd") or 0
         totais_nao_monetarios.append(total_qtd)
 
     grafico_nao_monetario = grafico_barrasVerticais(
-        anos, totais_nao_monetarios, titulo='Valores não monetários por ano', ylabel='Quantidade', cor='#4a7c59',
+        anos,
+        totais_nao_monetarios,
+        titulo="Valores não monetários por ano",
+        ylabel="Quantidade",
+        cor="#4a7c59",
     )
 
     grafico_monetario = grafico_barrasVerticais(
-        anos, rendas_monetarias, titulo='Valores monetários por ano', ylabel='Valor (R$)', cor='#6ab04c', prefixo='R$',
+        anos,
+        rendas_monetarias,
+        titulo="Valores monetários por ano",
+        ylabel="Valor (R$)",
+        cor="#6ab04c",
+        prefixo="R$",
     )
 
     grafico_comparativo = grafico_mix(anos, rendas_monetarias, totais_nao_monetarios)
 
-    context = {"family": family, "title": "Detalhes da ", 'grafico_monetario': grafico_monetario, 'grafico_nao_monetario': grafico_nao_monetario, 'grafico_comparativo': grafico_comparativo, 'renda': len(family_renda)}
+    context = {
+        "family": family,
+        "title": "Detalhes da ",
+        "grafico_monetario": grafico_monetario,
+        "grafico_nao_monetario": grafico_nao_monetario,
+        "grafico_comparativo": grafico_comparativo,
+        "renda": len(family_renda),
+    }
     return render(request, "seapac/familias/detail_family.html", context)
 
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def edit_family(request, id):
     family = get_object_or_404(Family, id=id)
 
@@ -399,7 +425,7 @@ def edit_family(request, id):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def list_families(request):
     # level = request.GET.get("nivel")
     query = request.GET.get("q")
@@ -415,18 +441,19 @@ def list_families(request):
             familyrenda__familysubsystem__subsystem__nome_subsistema=subsystem_name
         ).distinct()
 
-
     paginator = Paginator(families, 4)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    page_range = paginator.get_elided_page_range(number=page_obj.number, on_each_side=1, on_ends=2)
+    page_range = paginator.get_elided_page_range(
+        number=page_obj.number, on_each_side=1, on_ends=2
+    )
 
     subsystems = Subsystem.objects.all()
 
     context = {
         "title": "Lista de Famílias",
-    #    "nivel_selecionado": level,
+        #    "nivel_selecionado": level,
         "query": query,
         "page_obj": page_obj,
         "families": page_obj,
@@ -434,14 +461,14 @@ def list_families(request):
         "subsystem_selected": subsystem_name,
         "objeto": "familias",
         "families_list": families,
-        'page_range': page_range,
+        "page_range": page_range,
     }
     return render(request, "seapac/familias/list_families.html", context)
 
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def delete_family(request, id):
     family = get_object_or_404(Family, id=id)
     family.delete()
@@ -456,7 +483,7 @@ def delete_family(request, id):
 
 @never_cache
 @login_required
-@group_required('TECNICOS', 'AGRICULTORES')
+@group_required("TECNICOS", "AGRICULTORES")
 def renda_familiar_detail(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -475,11 +502,12 @@ def renda_familiar_detail(request, id, ano):
         "diferenca": resultado["diferenca"],
     }
     return render(request, "seapac/familias/renda_familiar_detail.html", context)
-    
+
+
 # --------------CRUD PROJETOS (COMPLETO)------------------
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def list_projects(request):
     status = request.GET.get("status")
     query = request.GET.get("q")
@@ -505,7 +533,7 @@ def list_projects(request):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def create_projects(request):
     if request.method == "POST":
         form = ProjectForm(request.POST, request.FILES)
@@ -524,7 +552,7 @@ def create_projects(request):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def edit_projects(request, pk):
     projetos = get_object_or_404(Project, pk=pk)
 
@@ -545,7 +573,7 @@ def edit_projects(request, pk):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def detail_projects(request, pk):
     projetos = get_object_or_404(Project, pk=pk)
     context = {"projetos": projetos}
@@ -554,7 +582,7 @@ def detail_projects(request, pk):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def delete_projects(request, pk):
     projetos = get_object_or_404(Project, pk=pk)
     projetos.delete()
@@ -567,7 +595,7 @@ def delete_projects(request, pk):
 # --------------CRUD TECNICOS (COMPLETO)--------------
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def list_tecs(request):
     especialidade = request.GET.get("especialidade")
     query = request.GET.get("q")
@@ -592,7 +620,7 @@ def list_tecs(request):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def create_tecs(request):
     if request.method == "POST":
         form = TechnicianForm(request.POST)
@@ -612,7 +640,7 @@ def create_tecs(request):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def edit_tecs(request, pk):
     tecs = get_object_or_404(Technician, pk=pk)
 
@@ -633,7 +661,7 @@ def edit_tecs(request, pk):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def detail_tecs(request, pk):
     tecs = get_object_or_404(Technician, pk=pk)
     context = {"tecs": tecs}
@@ -642,7 +670,7 @@ def detail_tecs(request, pk):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def delete_tecs(request, pk):
     tecs = get_object_or_404(Technician, pk=pk)
     tecs.delete()
@@ -655,7 +683,7 @@ def delete_tecs(request, pk):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def list_subsystems(request):
     query = request.GET.get("q")
     subsistemas = Subsystem.objects.all()
@@ -671,34 +699,35 @@ def list_subsystems(request):
 
 @never_cache
 @login_required
-@group_required('TECNICOS', 'AGRICULTORES')
+@group_required("TECNICOS", "AGRICULTORES")
 def detail_subsystems(request, id):
     subsistema = get_object_or_404(Subsystem, id=id)
     context = {"subsistema": subsistema, "title": "Detalhes do Subsistema"}
     return render(request, "seapac/subsistemas/subsystem_detail.html", context)
 
+
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def create_subsystems(request):
     if request.method == "POST":
         form = SubsystemForm(request.POST, request.FILES)
         if form.is_valid():
 
             subsystem = form.save(commit=False)
-            produtos = form.cleaned_data.get('produtos_base', [])
+            produtos = form.cleaned_data.get("produtos_base", [])
 
             novos_produtos = []
 
             for produto in produtos:
-                indice_foto = produto.get('foto_indice')
+                indice_foto = produto.get("foto_indice")
 
-                foto = request.FILES.get(f'foto_produto_{indice_foto}')
+                foto = request.FILES.get(f"foto_produto_{indice_foto}")
 
                 produto_data = {
-                    'nome': produto['nome'],
-                    'fluxos': produto.get('fluxos', []),
-                    'foto': None
+                    "nome": produto["nome"],
+                    "fluxos": produto.get("fluxos", []),
+                    "foto": None,
                 }
 
                 if foto:
@@ -706,17 +735,17 @@ def create_subsystems(request):
 
                     nome_foto = os.path.splitext(foto.name)[0]
                     caminho = default_storage.save(
-                       f'subsystem_products/{nome_foto}.svg',
-                       ContentFile(svg.encode("utf-8"))
+                        f"subsystem_products/{nome_foto}.svg",
+                        ContentFile(svg.encode("utf-8")),
                     )
 
-                    produto_data['foto'] = caminho
+                    produto_data["foto"] = caminho
 
                 novos_produtos.append(produto_data)
 
             subsystem.produtos_base = novos_produtos
             subsystem.save()
-            return redirect('list_subsystems')
+            return redirect("list_subsystems")
     else:
         form = SubsystemForm()
 
@@ -729,7 +758,7 @@ def create_subsystems(request):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def edit_subsystems(request, id):
     subsistema = get_object_or_404(Subsystem, id=id)
 
@@ -738,27 +767,23 @@ def edit_subsystems(request, id):
 
         form = SubsystemEditForm(request.POST, request.FILES, instance=subsistema)
         if form.is_valid():
-            produtos = form.cleaned_data.get('produtos_base', [])
+            produtos = form.cleaned_data.get("produtos_base", [])
 
             print("PRODUTOS RECEBIDOS NO EDITAR:", produtos)
 
             novos_produtos = []
 
             for produto in produtos:
-                indice_foto = produto.get(
-                    'foto_indice'
-                )
+                indice_foto = produto.get("foto_indice")
 
-                foto_nova = request.FILES.get(
-                    f"foto_produto_{indice_foto}"
-                )
+                foto_nova = request.FILES.get(f"foto_produto_{indice_foto}")
 
-                foto_existente = produto.get('foto')
+                foto_existente = produto.get("foto")
 
                 produto_data = {
-                    'nome': produto.get('nome', ''),
-                    'fluxos': produto.get('fluxos', []),
-                    'foto': foto_existente
+                    "nome": produto.get("nome", ""),
+                    "fluxos": produto.get("fluxos", []),
+                    "foto": foto_existente,
                 }
 
                 if foto_nova:
@@ -766,24 +791,22 @@ def edit_subsystems(request, id):
                     nome_foto = os.path.splitext(foto_nova.name)[0]
 
                     caminho = default_storage.save(
-                        f'subsystem_products/{nome_foto}.svg',
-                        ContentFile(svg.encode("utf-8"))
+                        f"subsystem_products/{nome_foto}.svg",
+                        ContentFile(svg.encode("utf-8")),
                     )
 
                     produto_data["foto"] = caminho
-                
+
                 novos_produtos.append(produto_data)
 
             subsystem = form.save(commit=False)
-            subsystem.produtos_base = (novos_produtos)
+            subsystem.produtos_base = novos_produtos
 
             subsystem.save()
-            
+
             return redirect("list_subsystems")
     else:
-        form = SubsystemEditForm(
-            instance=subsistema
-        )
+        form = SubsystemEditForm(instance=subsistema)
 
     return render(
         request,
@@ -794,7 +817,7 @@ def edit_subsystems(request, id):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def delete_subsystems(request, id):
     subsistema = get_object_or_404(Subsystem, id=id)
     subsistema.delete()
@@ -807,13 +830,13 @@ def delete_subsystems(request, id):
 # --------------CRUD FLUXO+SUBSISTEMAS--------------
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def flow(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda_ano = get_object_or_404(FamilyRenda, family=family, ano=ano)
-    family_subsystems = FamilySubsystem.objects.filter(family_renda=renda_ano).select_related(
-        "subsystem"
-    )
+    family_subsystems = FamilySubsystem.objects.filter(
+        family_renda=renda_ano
+    ).select_related("subsystem")
     style_mode = request.GET.get("style", "default")
 
     subsystems_data = []
@@ -961,6 +984,9 @@ def flow(request, id, ano):
 
 {style_lines_str}
 """
+
+    nome = slugify(family.nome_titular)
+
     context = {
         "id": id,
         "family": family,
@@ -968,25 +994,37 @@ def flow(request, id, ano):
         "style_mode": style_mode,
         "title": "Fluxo",
         "conteudo_mermaid": conteudo_mermaid,
-        'ano': ano
+        "ano": ano,
+        "nome_familia_editado": nome,
     }
     return render(request, "seapac/flow.html", context)
 
+
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def flow_list(request, id):
     current_year = currentyear()
     family = get_object_or_404(Family, id=id)
     rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
-    anos = range(1993, current_year+1)
+    anos = range(1993, current_year + 1)
     anos_decresc = sorted(anos, reverse=True)
-    
-    return render(request, 'seapac/flowlist.html', {'family': family, 'rendas': rendas, 'title': 'Fluxogramas da', 'anos': anos_decresc})
+
+    return render(
+        request,
+        "seapac/flowlist.html",
+        {
+            "family": family,
+            "rendas": rendas,
+            "title": "Fluxogramas da",
+            "anos": anos_decresc,
+        },
+    )
+
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def subsystem_panel(request, family_id, subsystem_id, renda_id):
     family = get_object_or_404(Family, id=family_id)
     family_renda = get_object_or_404(FamilyRenda, family=family, id=renda_id)
@@ -1016,13 +1054,14 @@ def subsystem_panel(request, family_id, subsystem_id, renda_id):
             "family_subsystem": family_subsystem,
             "title": "Painel do Subsistema",
             "type": "readonly",
-            "renda_ano": family_renda
+            "renda_ano": family_renda,
         },
     )
 
+
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def new_subsystem_to_family(request, id, ano):
     current_year = currentyear()
 
@@ -1031,71 +1070,90 @@ def new_subsystem_to_family(request, id, ano):
 
     family = get_object_or_404(Family, id=id)
 
-    renda_ano, criada = FamilyRenda.objects.get_or_create(
-        family=family,
-        ano=ano
-    )
-    if request.method == 'POST':
-        subsystem_choice = request.POST.getlist('subsistemas')
+    renda_ano, criada = FamilyRenda.objects.get_or_create(family=family, ano=ano)
+    if request.method == "POST":
+        subsystem_choice = request.POST.getlist("subsistemas")
 
-        for subsystem_id in subsystem_choice:
+        subsys_vinculados_ids = set(
+            FamilySubsystem.objects.filter(
+                family_renda=renda_ano
+            ).values_list("subsystem_id", flat=True)
+        )
+        subsys_selecionados_ids = set(map(int, subsystem_choice))
+
+        for subsystem_id in subsys_selecionados_ids - subsys_vinculados_ids:
             subsystem = get_object_or_404(Subsystem, id=subsystem_id)
-            renda_ano.add_subsystem_to_family(subsystem)   
+            renda_ano.add_subsystem_to_family(subsystem)
 
-        return redirect('flow_list', id=family.id)
+        FamilySubsystem.objects.filter(
+            family_renda=renda_ano,
+            subsystem_id__in=subsys_vinculados_ids - subsys_selecionados_ids
+        ).delete()
+
+        return redirect("flow_list", id=family.id)
 
     subsys_vinculados_ids = FamilySubsystem.objects.filter(
-        family_renda = renda_ano
-    ).values_list('subsystem_id', flat=True)
+        family_renda=renda_ano
+    ).values_list("subsystem_id", flat=True)
 
     subsystems = Subsystem.objects.all()
-    
-    return render(request, 'seapac/formflow.html', {
-        'family': family,
-        'ano': ano,
-        'renda_ano': renda_ano,
-        'subsystems': subsystems,
-        'selected_ids': list(subsys_vinculados_ids),
-    })
+
+    return render(
+        request,
+        "seapac/formflow.html",
+        {
+            "family": family,
+            "ano": ano,
+            "renda_ano": renda_ano,
+            "subsystems": subsystems,
+            "selected_ids": list(subsys_vinculados_ids),
+            "title": "Subsistemas"
+        },
+    )
+
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def form_subsystem_to_family(request, id):
     current_year = currentyear()
     family = get_object_or_404(Family, id=id)
-    anos = range(1993, current_year+1)
+    anos = range(1993, current_year + 1)
     anos_decresc = sorted(anos, reverse=True)
 
-    if request.method == 'POST':
-        subsystem_choice = request.POST.getlist('subsistemas')
-        year_choice = int(request.POST.get('ano'))
+    if request.method == "POST":
+        subsystem_choice = request.POST.getlist("subsistemas")
+        year_choice = int(request.POST.get("ano"))
 
         if not (1993 <= year_choice <= current_year):
             return HttpResponseBadRequest("Ano inválido")
 
         renda_ano, criada = FamilyRenda.objects.get_or_create(
-            family=family,
-            ano=year_choice
+            family=family, ano=year_choice
         )
 
         for subsystem_id in subsystem_choice:
             subsystem = get_object_or_404(Subsystem, id=subsystem_id)
-            renda_ano.add_subsystem_to_family(subsystem)  
+            renda_ano.add_subsystem_to_family(subsystem)
 
-        return redirect('flow_list', id=family.id)
+        return redirect("flow_list", id=family.id)
 
     subsystems = Subsystem.objects.all()
-    
-    return render(request, 'seapac/subsystem_form.html', {
-        'family': family,
-        'anos': anos_decresc,
-        'subsystems': subsystems,
-    })
+
+    return render(
+        request,
+        "seapac/subsystem_form.html",
+        {
+            "family": family,
+            "anos": anos_decresc,
+            "subsystems": subsystems,
+        },
+    )
+
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def duplicate_subsystem_to_family(request, id, ano, renda_ano):
     current_year = currentyear()
     family = get_object_or_404(Family, id=id)
@@ -1104,38 +1162,34 @@ def duplicate_subsystem_to_family(request, id, ano, renda_ano):
     if not (1993 <= ano <= current_year):
         return HttpResponseBadRequest("Ano inválido")
 
-    new_renda_ano = FamilyRenda.objects.create(
-        family=family,
-        ano=ano
-    )
+    new_renda_ano = FamilyRenda.objects.create(family=family, ano=ano)
 
-    data_renda_ano = FamilyRenda.objects.get(
-        family=family,
-        ano=renda_ano
-    )
+    data_renda_ano = FamilyRenda.objects.get(family=family, ano=renda_ano)
 
-    subsystems = FamilySubsystem.objects.filter(
-        family_renda=data_renda_ano
-    )
+    subsystems = FamilySubsystem.objects.filter(family_renda=data_renda_ano)
 
     for old_subsystem in subsystems:
         FamilySubsystem.objects.create(
             family_renda=new_renda_ano,
             subsystem=old_subsystem.subsystem,
-            produtos_saida=old_subsystem.produtos_saida
+            produtos_saida=old_subsystem.produtos_saida,
         )
-    
-    
-    return render(request, 'seapac/flowlist.html', {
-        'family': family,
-        'anos': range(1993, current_year+1),
-        'rendas': rendas,
-        'title': 'Fluxogramas da'
-    })
+
+    return render(
+        request,
+        "seapac/flowlist.html",
+        {
+            "family": family,
+            "anos": range(1993, current_year + 1),
+            "rendas": rendas,
+            "title": "Fluxogramas da",
+        },
+    )
+
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def delete_subsystem_to_family(request, id, ano):
     current_year = currentyear()
     family = get_object_or_404(Family, id=id)
@@ -1144,21 +1198,23 @@ def delete_subsystem_to_family(request, id, ano):
 
     renda_familia.delete()
 
-    messages.success(
-        request, f'Fluxo de "{renda_familia.ano}" excluído com sucesso!'
-    )
+    messages.success(request, f'Fluxo de "{renda_familia.ano}" excluído com sucesso!')
 
-    return render(request, 'seapac/flowlist.html', {
-        'family': family,
-        'anos': range(1993, current_year+1),
-        'rendas': rendas,
-        'title': 'Fuxogramas da'
-    })
+    return render(
+        request,
+        "seapac/flowlist.html",
+        {
+            "family": family,
+            "anos": range(1993, current_year + 1),
+            "rendas": rendas,
+            "title": "Fuxogramas da",
+        },
+    )
 
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def edit_subsystem_panel(request, family_id, subsystem_id, renda_id):
     family = get_object_or_404(Family, id=family_id)
     family_renda = get_object_or_404(FamilyRenda, family=family, id=renda_id)
@@ -1167,7 +1223,8 @@ def edit_subsystem_panel(request, family_id, subsystem_id, renda_id):
     )
 
     subsystems_destino = Subsystem.objects.filter(
-    familysubsystem__family_renda=family_renda).distinct()
+        familysubsystem__family_renda=family_renda
+    ).distinct()
 
     destino_choices = [
         (s.nome_subsistema, s.nome_subsistema) for s in subsystems_destino
@@ -1258,7 +1315,7 @@ def edit_subsystem_panel(request, family_id, subsystem_id, renda_id):
             "title": "Editar Painel do Subsistema",
             "type": "edit",
             "formset": formset,
-            "renda_ano": family_renda
+            "renda_ano": family_renda,
         },
     )
 
@@ -1268,38 +1325,23 @@ def edit_subsystem_panel(request, family_id, subsystem_id, renda_id):
 
 @never_cache
 @login_required
-@group_required('TECNICOS', 'AGRICULTORES')
+@group_required("TECNICOS", "AGRICULTORES")
 def timeline(request, id):
     family = get_object_or_404(Family, id=id)
     timeline_events = family.timeline_events.all().order_by("data", "id")
-
-#    secoes = {}
-#    for evento in timeline_events:
-#        if evento.secao not in secoes:
-#            secoes[evento.secao] = []
-#        secoes[evento.secao].append(evento)
-
-#    conteudo_mermaid = "timeline\n"
-#    for secao, eventos in secoes.items():
-#        conteudo_mermaid += f"    section {secao}\n"
-#        for evento in eventos:
-#            conteudo_mermaid += (
-#                f"        {evento.data} : {evento.titulo} - {evento.descricao}\n"
-#            )
 
     context = {
         "id": id,
         "family": family,
         "events": timeline_events,
         "title": "Linha do Tempo",
-#        "conteudo_mermaid": conteudo_mermaid,
     }
     return render(request, "seapac/timeline/timeline.html", context)
 
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def add_timeline(request, id):
     family = get_object_or_404(Family, id=id)
     timeline_events = family.timeline_events.all().order_by("data")
@@ -1320,22 +1362,23 @@ def add_timeline(request, id):
         {"form": form, "title": "Adicionar Evento à Timeline", "family": family},
     )
 
+
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def delete_timeline(request, id, event_id):
     family = get_object_or_404(Family, id=id)
     evento = get_object_or_404(TimelineEvent, id=event_id, family=family)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         evento.delete()
 
-    return redirect('timeline', id=id)
+    return redirect("timeline", id=id)
 
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def edit_timeline(request, id, event_id):
     family = get_object_or_404(Family, id=id)
     event = get_object_or_404(TimelineEvent, id=event_id, family=family)
@@ -1364,7 +1407,7 @@ def edit_timeline(request, id, event_id):
 
 @never_cache
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def search_timeline_event(request, id):
     family = get_object_or_404(Family, id=id)
 
@@ -1388,10 +1431,10 @@ def search_timeline_event(request, id):
 
 
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def relatorio_family_pdf(request, id):
     family = get_object_or_404(Family, id=id)
-    family_renda = list(FamilyRenda.objects.filter(family=family).order_by('ano'))
+    family_renda = list(FamilyRenda.objects.filter(family=family).order_by("ano"))
 
     anos = []
     rendas_monetarias = []
@@ -1400,72 +1443,324 @@ def relatorio_family_pdf(request, id):
     for renda in family_renda:
         renda.subsystems = FamilySubsystem.objects.filter(
             family_renda=renda
-        ).select_related('subsystem')
+        ).select_related("subsystem")
 
         resultado = renda.calcular_renda()
         anos.append(renda.ano)
-        rendas_monetarias.append(br_for_float(resultado['renda_total']))
+        rendas_monetarias.append(br_for_float(resultado["renda_total"]))
 
         total_qtd = 0
         for fs in renda.subsystems:
             for produto in fs.produtos_saida or []:
-                for fluxo in produto.get('fluxos', []):
-                    total_qtd += fluxo.get('qtd') or 0
+                for fluxo in produto.get("fluxos", []):
+                    total_qtd += fluxo.get("qtd") or 0
         totais_nao_monetarios.append(total_qtd)
 
     grafico_nao_monetario = grafico_barrasVerticais(
-        anos, totais_nao_monetarios, titulo='Valores não monetários por ano', ylabel='Quantidade', cor='#4a7c59',
+        anos,
+        totais_nao_monetarios,
+        titulo="Valores não monetários por ano",
+        ylabel="Quantidade",
+        cor="#4a7c59",
     )
 
     grafico_monetario = grafico_barrasVerticais(
-        anos, rendas_monetarias, titulo='Valores monetários por ano', ylabel='Valor (R$)', cor='#6ab04c', prefixo='R$',
+        anos,
+        rendas_monetarias,
+        titulo="Valores monetários por ano",
+        ylabel="Valor (R$)",
+        cor="#6ab04c",
+        prefixo="R$",
     )
 
     grafico_comparativo = grafico_mix(anos, rendas_monetarias, totais_nao_monetarios)
 
-    html_txt = render(request, 'seapac/familias/pdf_familia.html', {'family': family, 'renda_familia': family_renda, 'grafico_monetario': grafico_monetario, 'grafico_nao_monetario': grafico_nao_monetario, 'grafico_comparativo': grafico_comparativo, 'renda': len(family_renda)}).content.decode("utf-8")
+    html_txt = render(
+        request,
+        "seapac/familias/pdf_familia.html",
+        {
+            "family": family,
+            "renda_familia": family_renda,
+            "grafico_monetario": grafico_monetario,
+            "grafico_nao_monetario": grafico_nao_monetario,
+            "grafico_comparativo": grafico_comparativo,
+            "renda": len(family_renda),
+        },
+    ).content.decode("utf-8")
 
-    css_path = finders.find('css/family_info_pdf.css')
-    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
+    css_path = finders.find("css/family_info_pdf.css")
+    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri("/")).write_pdf(
+        stylesheets=[CSS(filename=css_path)]
+    )
 
     response = HttpResponse(
         pdf,
-        content_type='application/pdf',
+        content_type="application/pdf",
     )
-    response['Content-Disposition'] = (
+    response["Content-Disposition"] = (
         f'attachment; filename="Informações{family.nome_titular}.pdf"'
     )
     return response
 
+
 @login_required
-@group_required('TECNICOS')
+@group_required("TECNICOS")
 def pdf_timeline(request, id):
     family = get_object_or_404(Family, id=id)
     eventos = TimelineEvent.objects.filter(family=family).order_by("data", "id")
 
-    html_txt = render(request, 'seapac/timeline/pdf_timeline.html', {'family': family, 'events': eventos}).content.decode("utf-8")
-    css_path = finders.find('css/timeline_pdf.css')
-    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri('/')).write_pdf(stylesheets=[CSS(filename=css_path)])
+    logo_relativo = finders.find("img/logo-seapac.png")
+    logo_absoluto = Path(logo_relativo).resolve().as_uri()
+
+    html_txt = render(
+        request,
+        "seapac/timeline/pdf_timeline.html",
+        {
+            "family": family,
+            "events": eventos,
+            "logo_path": logo_absoluto,
+        },
+    ).content.decode("utf-8")
+    css_path = finders.find("css/pdfs/timeline_pdf.css")
+    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri("/")).write_pdf(
+        stylesheets=[CSS(filename=css_path)]
+    )
+
+    nome = slugify(family.nome_titular)
 
     response = HttpResponse(
         pdf,
-        content_type='application/pdf',
+        content_type="application/pdf",
     )
-    response['Content-Disposition'] = (
-        f'attachment; filename="timeline{family.nome_titular}.pdf"'
-    )
+    response["Content-Disposition"] = f'attachment; filename="timeline--{nome}.pdf"'
 
     return response
 
-#------------------------------------------------------------------------
 
-#**********************************
-#***********AGRICULTORES***********
-#**********************************
+@login_required
+@group_required("TECNICOS")
+def pdf_renda(request, id, ano):
+    family = get_object_or_404(Family, id=id)
+    renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    resultado = renda.calcular_renda()
+    logo_relativo = finders.find("img/logo-seapac.png")
+    logo_absoluto = (
+        Path(logo_relativo).resolve().as_uri()
+    )  # Transforma em caminho absoluto e deixa no modelo uri
+
+    contexto = {
+        "family": family,
+        "ano": ano,
+        "produtos": resultado["produtos"],
+        "total_receita": resultado["total_receita"],
+        "total_custo": resultado["total_custo"],
+        "renda_total": resultado["renda_total"],
+        "total_receita_potencial": resultado["total_receita_potencial"],
+        "renda_total_potencial": resultado["renda_total_potencial"],
+        "title": f"Renda da ",
+        "diferenca": resultado["diferenca"],
+        "logo_path": logo_absoluto,
+    }
+
+    html_txt = render_to_string(
+        "seapac/pdfs/pdf_renda.html",
+        contexto,
+        request=request,
+    )
+    css_path = finders.find("css/pdfs/renda_pdf.css")
+
+    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri("/")).write_pdf(
+        stylesheets=[CSS(filename=css_path)]
+    )
+
+    nome = slugify(family.nome_titular)
+    response = HttpResponse(
+        pdf,
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = f'attachment; filename="renda--{nome}--{ano}.pdf"'
+    return response
+
+
+@login_required
+@group_required("TECNICOS")
+@xframe_options_sameorigin
+def pdf_flow(request, id, ano):
+    family = get_object_or_404(Family, id=id)
+    renda_ano = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    family_subsystems = FamilySubsystem.objects.filter(
+        family_renda=renda_ano
+    ).select_related("subsystem")
+    # style_mode = request.GET.get("style", "default")
+
+    subsystems_data = []
+    for family_subsystem in family_subsystems:
+        subsystems_data.append(
+            {
+                "id": family_subsystem.subsystem.id,
+                "nome_subsistema": family_subsystem.subsystem.nome_subsistema,
+                "tipo": family_subsystem.subsystem.tipo,
+                "produtos_saida": family_subsystem.produtos_saida,
+            }
+        )
+
+    fluxos = []
+    for subsystem in subsystems_data:
+        nome_subsistema = subsystem["nome_subsistema"]
+        for produto in subsystem["produtos_saida"]:
+            nome_produto = produto["nome"]
+            fluxos_do_produto = produto.get("fluxos", [])
+
+            total_qtd = sum((f.get("qtd") or 0) for f in fluxos_do_produto)
+
+            for fluxo in fluxos_do_produto:
+                destino = fluxo.get("destino", "Mundo Externo")
+                qtd = fluxo.get("qtd")
+                und = fluxo.get("und", "")
+                porcentagem_calc = round((qtd / total_qtd) * 100, 1) if total_qtd else 0
+
+                rotulo_fluxo = nome_produto
+                if qtd:
+                    rotulo_fluxo += f" {qtd}"
+                if und:
+                    rotulo_fluxo += f" {und}"
+                if porcentagem_calc:
+                    rotulo_fluxo += f" {porcentagem_calc:.0f}%"
+
+                fluxos.append((nome_subsistema, rotulo_fluxo, destino))
+
+    text_list = []
+
+    for origem, produto, destino in fluxos:
+        origem_corrigida = origem.replace(" ", "_")
+        destino_corrigida = destino.replace(" ", "_")
+        text_list.append(f"{origem_corrigida} --{produto}--> {destino_corrigida}")
+
+    flux_count = {}
+    for origem, produto, destino in fluxos:
+        flux_count[origem] = flux_count.get(origem, 0) + 1
+
+    subsystems_com_fluxo = {nome for fluxo in fluxos for nome in (fluxo[0], fluxo[2])}
+
+    subsystems_sem_fluxo = [
+        s["nome_subsistema"].replace(" ", "_")
+        for s in subsystems_data
+        if s["nome_subsistema"] not in subsystems_com_fluxo
+    ]
+
+    click_lines = []
+    for s in subsystems_data:
+        subsystem_id = s["id"]
+        nome_subsistema = s["nome_subsistema"].replace(" ", "_")
+        host = request.get_host()
+        if ":" not in host:
+            host = f"{host}:82"
+        url = f"{request.scheme}://{host}{reverse('subsystem_panel', args=[family.id, subsystem_id, renda_ano.id])}"
+        click_lines.append(
+            f'click {nome_subsistema} href "{url}" "Abrir painel de {nome_subsistema}"'
+        )
+
+    for nome in subsystems_sem_fluxo:
+        text_list.append(f"{nome}")
+
+    def get_color_intensity(n, tipo):
+        if tipo == "TS":
+            if n <= 2:
+                return "#b7d8f5"
+            elif n <= 5:
+                return "#6eb5e7"
+            elif n <= 9:
+                return "#3690c2"
+            else:
+                return "#125877"
+        elif tipo == "ME":
+            if n <= 2:
+                return "#f7d26a"
+            elif n <= 5:
+                return "#f5b900"
+            elif n <= 9:
+                return "#c48f00"
+            else:
+                return "#7a5e00"
+        else:
+            if n <= 2:
+                return "#b7f5b7"
+            elif n <= 5:
+                return "#6ee76e"
+            elif n <= 9:
+                return "#36c236"
+            else:
+                return "#127712"
+
+    classDefSS = "classDef cssFlowSS stroke:#333,stroke-width:1px;"
+    classDefTS = "classDef cssFlowTS stroke:#333,stroke-width:1px;"
+
+    style_lines = []
+    for s in subsystems_data:
+        nome = s["nome_subsistema"].replace(" ", "_")
+        tipo = s.get("tipo", "SS")
+        n_fluxos = flux_count.get(s["nome_subsistema"], 0)
+        fill_color = get_color_intensity(n_fluxos, tipo)
+        style_lines.append(
+            f"style {nome} fill:{fill_color},stroke:#333,stroke-width:1px;"
+        )
+
+    me_nodes = [
+        s["nome_subsistema"].replace(" ", "_")
+        for s in subsystems_data
+        if s["tipo"] == "ME"
+    ]
+    if me_nodes:
+        mundo_externo = "subgraph Mundo Externo\n"
+        for node in me_nodes:
+            mundo_externo += f"    {node}\n"
+        mundo_externo += "end"
+    else:
+        mundo_externo = ""
+
+    diagram_lines = "\n".join(text_list)
+    style_lines_str = "\n".join(style_lines)
+    click_lines_str = "\n".join(click_lines)
+
+    conteudo_mermaid = f"""flowchart LR
+{mundo_externo}
+
+{classDefSS}
+{classDefTS}
+{diagram_lines}
+
+{click_lines_str}
+
+{style_lines_str}
+"""
+
+    nome = slugify(family.nome_titular)
+
+    context = {
+        "id": id,
+        "family": family,
+        "family_subsystems": family_subsystems,
+        # "style_mode": style_mode,
+        "title": "Fluxo",
+        "conteudo_mermaid": conteudo_mermaid,
+        "ano": ano,
+        "nome_familia_editado": nome,
+        # "nome_tecnico": request.get_user.nome_tecnico,
+    }
+
+    return render(request, "seapac/pdfs/pdf_flow.html", context=context)
+
+
+# ------------------------------------------------------------------------
+
+# **********************************
+# ***********AGRICULTORES***********
+# **********************************
+
 
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
 def dashboard_agricultores(request):
     family = get_object_or_404(Family, agricultor=request.user)
 
@@ -1475,23 +1770,21 @@ def dashboard_agricultores(request):
     }
     return render(request, "seapac/agricultores/dashboard_agricultor.html", context)
 
-@never_cache
-@login_required
-@group_required('AGRICULTORES')
-def list_flows_agricultor(request):
-    family = get_object_or_404(Family, agricultor=request.user)
-    rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
-    
-    context = {
-        "title": "Fluxos",
-        'rendas': rendas,
-        'family': family
-    }
-    return render(request, "seapac/agricultores/list_flow_agricultor.html", context)
 
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
+def list_flows_agricultor(request):
+    family = get_object_or_404(Family, agricultor=request.user)
+    rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
+
+    context = {"title": "Fluxos", "rendas": rendas, "family": family}
+    return render(request, "seapac/agricultores/list_flow_agricultor.html", context)
+
+
+@never_cache
+@login_required
+@group_required("AGRICULTORES")
 def renda_agricultor(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -1510,9 +1803,10 @@ def renda_agricultor(request, id, ano):
     }
     return render(request, "seapac/agricultores/renda_agricultor.html", context)
 
+
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
 def renda_details_agricultor(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -1526,20 +1820,22 @@ def renda_details_agricultor(request, id, ano):
     }
     return render(request, "seapac/agricultores/renda_details_agricultor.html", context)
 
+
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
 def flow_agricultor(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda_ano = get_object_or_404(FamilyRenda, ano=ano, family=family)
-    family_subsistema = (FamilySubsystem.objects.filter(family_renda=renda_ano)).select_related('subsystem')
+    family_subsistema = (
+        FamilySubsystem.objects.filter(family_renda=renda_ano)
+    ).select_related("subsystem")
 
     nodes = []
     edges = []
     produto_count = 0
 
     subsistemas = {}
-
 
     for f in family_subsistema:
         subsystem = f.subsystem
@@ -1551,41 +1847,39 @@ def flow_agricultor(request, id, ano):
         if subsystem.has_valid_photo():
             imagem_subsistema = subsystem.get_photo_url()
         elif subsystem.id == 1:
-            imagem_subsistema = static(
-                FOTO_SUBSYS.get('UFPA')
-            )
+            imagem_subsistema = static(FOTO_SUBSYS.get("UFPA"))
         elif subsystem.id == 29:
-            imagem_subsistema = static(
-                FOTO_SUBSYS.get('Mercado Externo')
-            )
+            imagem_subsistema = static(FOTO_SUBSYS.get("Mercado Externo"))
         else:
             imagem_subsistema = static(
-                f'img/fotos_subsistemas/{subsystem.id}/{subsystem.id}.jpg'
+                f"img/fotos_subsistemas/{subsystem.id}/{subsystem.id}.jpg"
             )
 
-        nodes.append({
-            'data': {
-                'id': f'subsystem_{subsystem.id}',
-                'label': subsystem.nome_subsistema,
-                'tipo': subsystem.tipo,
-                'imagem': imagem_subsistema,
-                'descricao': subsystem.descricao,
+        nodes.append(
+            {
+                "data": {
+                    "id": f"subsystem_{subsystem.id}",
+                    "label": subsystem.nome_subsistema,
+                    "tipo": subsystem.tipo,
+                    "imagem": imagem_subsistema,
+                    "descricao": subsystem.descricao,
+                }
             }
-        })
+        )
 
     for f in family_subsistema:
         subsystem = f.subsystem
-        subsystem_id = f'subsystem_{subsystem.id}'
+        subsystem_id = f"subsystem_{subsystem.id}"
 
         for produto in f.produtos_saida:
 
-            nome_p = produto.get('nome', 'Produto')
-            fluxos_produto = produto.get('fluxos', [])
+            nome_p = produto.get("nome", "Produto")
+            fluxos_produto = produto.get("fluxos", [])
             fluxos_info = [
                 {
-                    'destino': fluxo.get('destino', 'Mundo Externo'),
-                    'quantidade': fluxo.get('qtd') or 0,
-                    'unidade': fluxo.get('und', '')
+                    "destino": fluxo.get("destino", "Mundo Externo"),
+                    "quantidade": fluxo.get("qtd") or 0,
+                    "unidade": fluxo.get("und", ""),
                 }
                 for fluxo in fluxos_produto
             ]
@@ -1593,135 +1887,126 @@ def flow_agricultor(request, id, ano):
             if not fluxos_produto:
                 continue
 
-            produto_id = (
-                f'produto_{subsystem.id}_{produto_count}'
-            )
+            produto_id = f"produto_{subsystem.id}_{produto_count}"
 
-            foto_produto = produto.get('foto')
+            foto_produto = produto.get("foto")
 
             if not foto_produto:
                 for produto_base in subsystem.produtos_base:
-                    if produto_base.get('nome') == nome_p:
-                        foto_produto = produto_base.get('foto')
+                    if produto_base.get("nome") == nome_p:
+                        foto_produto = produto_base.get("foto")
                         break
 
             if foto_produto:
-                foto_produto= foto_produto.lstrip('/')
+                foto_produto = foto_produto.lstrip("/")
 
                 if default_storage.exists(foto_produto):
-                    imagem_produto = (
-                        settings.MEDIA_URL + foto_produto
-                    )
+                    imagem_produto = settings.MEDIA_URL + foto_produto
                 else:
                     imagem_produto = static(
                         FOTOS_PRODUTOS.get(
-                            nome_p,
-                            'img/subsystem_products/sem_imagem.svg'
+                            nome_p, "img/subsystem_products/sem_imagem.svg"
                         )
                     )
             else:
-                imagem_produto = static(FOTOS_PRODUTOS.get(nome_p, 'img/subsystem_products/sem_imagem.svg'))
+                imagem_produto = static(
+                    FOTOS_PRODUTOS.get(nome_p, "img/subsystem_products/sem_imagem.svg")
+                )
 
-            nodes.append({
-                'data': {
-                    'id': produto_id,
-                    'label': nome_p,
-                    'tipo': 'produto',
-                    'imagem': imagem_produto,
-                    'fluxos': fluxos_info,
+            nodes.append(
+                {
+                    "data": {
+                        "id": produto_id,
+                        "label": nome_p,
+                        "tipo": "produto",
+                        "imagem": imagem_produto,
+                        "fluxos": fluxos_info,
+                    }
                 }
-            })
+            )
 
-            edges.append({
-                'data': {
-                    'id': f'{subsystem_id}_{produto_id}',
-                    'source': subsystem_id,
-                    'target': produto_id,
-                    'tipo': 'producao',
+            edges.append(
+                {
+                    "data": {
+                        "id": f"{subsystem_id}_{produto_id}",
+                        "source": subsystem_id,
+                        "target": produto_id,
+                        "tipo": "producao",
+                    }
                 }
-            })
+            )
 
             produto_count += 1
 
             for fluxo_count, fluxo in enumerate(fluxos_produto):
-                destino = fluxo.get(
-                    'destino',
-                    'Mundo Externo'
-                )
-                qtd =  fluxo.get('qtd') or 0
-                und = fluxo.get('und', '')
+                destino = fluxo.get("destino", "Mundo Externo")
+                qtd = fluxo.get("qtd") or 0
+                und = fluxo.get("und", "")
 
                 if destino in subsistemas:
-                    destino_id = (
-                        f'subsystem_{subsistemas[destino].id}'
-                    )
-                    edges.append({
-                        'data': {
-                            'id': (
-                                f'{produto_id}_'
-                                f'{subsistemas[destino].id}_'
-                                f'{fluxo_count}'
-                            ),
-                            'source': produto_id,
-                            'target': destino_id,
-                            'quantidade': qtd,
-                            'unidade': und,
-                            'tipo': 'fluxo',
+                    destino_id = f"subsystem_{subsistemas[destino].id}"
+                    edges.append(
+                        {
+                            "data": {
+                                "id": (
+                                    f"{produto_id}_"
+                                    f"{subsistemas[destino].id}_"
+                                    f"{fluxo_count}"
+                                ),
+                                "source": produto_id,
+                                "target": destino_id,
+                                "quantidade": qtd,
+                                "unidade": und,
+                                "tipo": "fluxo",
+                            }
                         }
-                    })
+                    )
                 else:
-                    destino_n = unicodedata.normalize('NFKD', destino)
-                    destino_n = ''.join(
-                        c for c in destino_n
-                        if not unicodedata.combining(c)
-                    )               
-                    destino_id = (
-                        'destino_' + destino_n.lower().replace(' ', '_')
+                    destino_n = unicodedata.normalize("NFKD", destino)
+                    destino_n = "".join(
+                        c for c in destino_n if not unicodedata.combining(c)
                     )
+                    destino_id = "destino_" + destino_n.lower().replace(" ", "_")
 
-                    if not any(n['data']['id'] == destino_id for n in nodes):
-                        nodes.append({
-                            'data': {
-                                'id': destino_id,
-                                'label': destino,
-                                'tipo': 'destino',
-                            },
-                        })
+                    if not any(n["data"]["id"] == destino_id for n in nodes):
+                        nodes.append(
+                            {
+                                "data": {
+                                    "id": destino_id,
+                                    "label": destino,
+                                    "tipo": "destino",
+                                },
+                            }
+                        )
 
-                    edges.append({
-                        'data': {
-                            'id': (
-                                f'{produto_id}_'
-                                f'{destino_id}_'
-                                f'{fluxo_count}'
-                            ),
-                            'source': produto_id,
-                            'target': destino_id,
-                            'quantidade': qtd,
-                            'unidade': und,
-                            'tipo': 'fluxo',
+                    edges.append(
+                        {
+                            "data": {
+                                "id": (
+                                    f"{produto_id}_" f"{destino_id}_" f"{fluxo_count}"
+                                ),
+                                "source": produto_id,
+                                "target": destino_id,
+                                "quantidade": qtd,
+                                "unidade": und,
+                                "tipo": "fluxo",
+                            }
                         }
-                    })
+                    )
     context = {
         "fluxo": {
             "nodes": nodes,
             "edges": edges,
         },
-        "title": (
-            f"Fluxo de "
-            f"{family.nome_titular} - {ano}"
-        ),
+        "title": (f"Fluxo de " f"{family.nome_titular} - {ano}"),
         "family": family,
     }
-    return render(
-        request,
-        "seapac/agricultores/flow_agricultor.html",
-        context
-    )
+    return render(request, "seapac/agricultores/flow_agricultor.html", context)
+
 
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
 def renda_agricultor(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -1729,19 +2014,18 @@ def renda_agricultor(request, id, ano):
 
     renda_total = resultado["renda_total"]
     renda_potencial = resultado["renda_total_potencial"]
-    
-    renda_total = renda_total.replace('.', '').replace(',','.')
-    renda_potencial = renda_potencial.replace('.', '').replace(',','.')
+
+    renda_total = renda_total.replace(".", "").replace(",", ".")
+    renda_potencial = renda_potencial.replace(".", "").replace(",", ".")
 
     color_result = "var(--secondary-green)"
 
     if float(renda_total) < 0:
-        color_result="var(--error)"
+        color_result = "var(--error)"
 
     color_result_potencial = "var(--secondary-green)"
     if float(renda_potencial) < 0:
-        color_result_potencial="var(--error)"
-
+        color_result_potencial = "var(--error)"
 
     context = {
         "family": family,
@@ -1754,15 +2038,14 @@ def renda_agricultor(request, id, ano):
         "title": f"Renda da ",
         "diferenca": resultado["diferenca"],
         "color_result": color_result,
-        "color_result_potencial":color_result_potencial,
-
+        "color_result_potencial": color_result_potencial,
     }
     return render(request, "seapac/agricultores/renda_agricultor.html", context)
 
 
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
 def renda_details_agricultor(request, id, ano):
     family = get_object_or_404(Family, id=id)
     renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
@@ -1776,9 +2059,10 @@ def renda_details_agricultor(request, id, ano):
     }
     return render(request, "seapac/agricultores/renda_details_agricultor.html", context)
 
+
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
 def subsystems_agricultor(request):
     family = get_object_or_404(Family, agricultor=request.user)
     rendas = FamilyRenda.objects.filter(family=family).order_by("-ano")
@@ -1788,39 +2072,38 @@ def subsystems_agricultor(request):
     ano_recente = rendas_lista[0].ano
     print(f"\nano mais recente selecionado: \n{ano_recente}")
 
-
     family_subsystems = FamilySubsystem.objects.filter(
-            family_renda=FamilyRenda.objects.filter(family=family, ano=ano_recente)[:1]
-        ).select_related(
-        "subsystem"
-    )
+        family_renda=FamilyRenda.objects.filter(family=family, ano=ano_recente)[:1]
+    ).select_related("subsystem")
 
-    print(f'\nfamily_subsystems:\n{family_subsystems}')
+    print(f"\nfamily_subsystems:\n{family_subsystems}")
 
     subsystems_data = []
     for family_subsystem in family_subsystems:
-        subsystems_data.append({
-            "id": family_subsystem.subsystem.id,
-            "nome_subsistema": family_subsystem.subsystem.nome_subsistema,
-            "tipo": family_subsystem.subsystem.tipo,
-        })
+        subsystems_data.append(
+            {
+                "id": family_subsystem.subsystem.id,
+                "nome_subsistema": family_subsystem.subsystem.nome_subsistema,
+                "tipo": family_subsystem.subsystem.tipo,
+            }
+        )
 
     print(f"\nsubsystems_data: \n{subsystems_data}")
-    
+
     context = {
-        'family':family,
-        'subsystems':subsystems_data,
-        'ano':ano_recente,
-        'title': "Meus subsistemas",
+        "family": family,
+        "subsystems": subsystems_data,
+        "ano": ano_recente,
+        "title": "Meus subsistemas",
     }
     return render(request, "seapac/agricultores/subsistemas_agricultor.html", context)
 
 
 @never_cache
 @login_required
-@group_required('AGRICULTORES')
+@group_required("AGRICULTORES")
 def timeline_agricultor(request, agricultor_id):
     user_agricultor = get_object_or_404(Agricultor, id=agricultor_id)
     family_agricultor = get_object_or_404(Family, agricultor=user_agricultor)
 
-    return redirect('timeline', id=family_agricultor.id)
+    return redirect("timeline", id=family_agricultor.id)

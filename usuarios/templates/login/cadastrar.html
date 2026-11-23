@@ -1,24 +1,17 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Sistema SEAPAC</title>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <style>
         :root {
             --primary-green: #4CAF50;
+            --secondary-green: #198754;
             --light-green: #E8F5E9;
             --dark-gray: #2C3E50;
-        }
-
-        body {
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-gray) 100%);
-            min-height: 100vh;
-            padding: 40px 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --light-gray: #e2e8f0;
         }
 
         .cadastro-container {
@@ -31,7 +24,7 @@
         }
 
         .cadastro-header {
-            background: var(--primary-green);
+            background: var(--secondary-green);
             color: white;
             padding: 30px;
             text-align: center;
@@ -81,7 +74,7 @@
         }
 
         .form-section {
-            background-color: var(--light-green);
+            background-color: var(--light-gray);
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -98,10 +91,11 @@
             color: red;
         }
     </style>
+{% endblock extra_head %}
 
-</head>
+{% block title %}Cadastrar técnico{% endblock title %}
 
-<body>
+{% block center %}
 
     <div class="container">
 
@@ -110,7 +104,7 @@
             <div class="cadastro-header">
 
                 <i class="bi bi-person-plus-fill"></i>
-                <h2>Cadastro de Usuário</h2>
+                <h2>Cadastro de Técnico</h2>
                 <p class="mb-0">Preencha os dados para criar sua conta</p>
 
             </div>
@@ -282,16 +276,6 @@
 
                     </div>
 
-                    <div class="text-center">
-
-                        <p class="mb-0">Já tem uma conta? 
-                            <a href="{% url 'login_tecnico' %}" class="link-login">
-                                Faça login aqui
-                            </a>
-                        </p>
-
-                    </div>
-
                 </form>
 
             </div>
@@ -300,6 +284,9 @@
 
     </div>
 
+{% endblock center %}
+
+{% block extra_js %}
+{{ block.super }}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock extra_js %}
