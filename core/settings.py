@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-u&ggs5)a*$cn0(7-_t+qp#ucn&&c$i$-k902eg-@drnxda)oe@"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -37,7 +37,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 # SECURE_SSL_REDIRECT = True
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO','https') 
 # Application definition
 
 INSTALLED_APPS = [
