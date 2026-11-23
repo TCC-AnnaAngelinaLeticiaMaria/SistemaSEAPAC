@@ -20,6 +20,8 @@
             <i class="fa-solid fa-timeline"></i>
             Timeline
         </button>
+        <button class="btn btn-primary" id="btn-pdf" data-url="{% url 'pdf_flow' family.id ano %}">Gerar PDF</button>
+
     </div>
 </div>
 <div style="margin-top: 25px;">
@@ -48,6 +50,7 @@
   </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
   <script src="https://unpkg.com/@panzoom/panzoom/dist/panzoom.min.js"></script>
   <script>
@@ -97,5 +100,98 @@
         }
     });
     }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+{# em produção, prefira servir esses arquivos via {% static %} #}
+
+<script>
+const { jsPDF } = window.jspdf;
+
+document.getElementById("btn-pdf").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  btn.textContent = "Gerando...";
+
+  try {
+    const iframe = await carregarIframe(btn.dataset.url);
+    const alvo = iframe.contentDocument.getElementById("conteudo-pdf");
+    await gerarPDF(alvo, "fluxos-{{ nome_familia_editado }}-{{ ano }}.pdf");
+    iframe.remove();
+  } catch (err) {
+    console.error(err);
+    alert("Não foi possível gerar o PDF.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Gerar PDF";
+  }
+});
+
+function carregarIframe(url) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement("iframe");
+    // Fora da tela, mas COM tamanho real (display:none quebra a renderização)
+    iframe.style.cssText =
+      "position:fixed; left:-10000px; top:0; width:1123px; height:794px; border:0;";
+    iframe.src = url;
+
+    const timeout = setTimeout(() => reject(new Error("Timeout")), 20000);
+
+    const onMsg = (ev) => {
+      if (ev.origin === window.location.origin && ev.data?.tipo === "mermaid-pronto") {
+        window.removeEventListener("message", onMsg);
+        clearTimeout(timeout);
+        resolve(iframe);
+      }
+    };
+    window.addEventListener("message", onMsg);
+    document.body.appendChild(iframe);
+  });
+}
+
+async function gerarPDF(elemento, nomeArquivo) {
+  const canvas = await html2canvas(elemento, {
+    scale: 2,                 // mais nitidez
+    useCORS: true,
+    backgroundColor: "#ffffff",
+    windowWidth: elemento.scrollWidth,
+  });
+
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+  const larguraPagina = doc.internal.pageSize.getWidth();   // 297
+  const alturaPagina  = doc.internal.pageSize.getHeight();  // 210
+  // const margemSuperior = 3;
+  // const margemInferior = 10;
+  const margem = 10;
+
+  const larguraImg = larguraPagina - margem * 2;
+  const alturaImg  = (canvas.height * larguraImg) / canvas.width;
+  const alturaUtil = alturaPagina - margem * 2;
+
+  // Paginação: fatia o canvas em pedaços do tamanho da página
+  const pxPorMm = canvas.width / larguraImg;
+  const alturaFatiaPx = Math.floor(alturaUtil * pxPorMm);
+  let y = 0, pagina = 0;
+
+  while (y < canvas.height) {
+    const fatia = document.createElement("canvas");
+    fatia.width = canvas.width;
+    fatia.height = Math.min(alturaFatiaPx, canvas.height - y);
+    fatia.getContext("2d").drawImage(
+      canvas, 0, y, canvas.width, fatia.height, 0, 0, canvas.width, fatia.height
+    );
+
+    if (pagina > 0) doc.addPage();
+    doc.addImage(
+      fatia.toDataURL("image/jpeg", 0.95), "JPEG",
+      margem, margem, larguraImg, fatia.height / pxPorMm
+    );
+    y += alturaFatiaPx;
+    pagina++;
+  }
+
+  doc.save(nomeArquivo);   // dispara o download no navegador
+}
 </script>
 {% endblock %}

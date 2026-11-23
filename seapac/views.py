@@ -33,7 +33,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.template.loader import render_to_string
 from django.utils.dateparse import parse_datetime
+from django.utils.text import slugify
 from django.core.paginator import Paginator
 from .mixins import GroupRequireMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -50,6 +53,7 @@ from django.urls import reverse
 from django.views import View
 from django.db import transaction
 from weasyprint import HTML, CSS
+from pathlib import Path
 import pandas as pd
 import unicodedata
 import secrets
@@ -980,6 +984,9 @@ def flow(request, id, ano):
 
 {style_lines_str}
 """
+
+    nome = slugify(family.nome_titular)
+
     context = {
         "id": id,
         "family": family,
@@ -988,6 +995,7 @@ def flow(request, id, ano):
         "title": "Fluxo",
         "conteudo_mermaid": conteudo_mermaid,
         "ano": ano,
+        "nome_familia_editado": nome,
     }
     return render(request, "seapac/flow.html", context)
 
@@ -1488,25 +1496,246 @@ def pdf_timeline(request, id):
     family = get_object_or_404(Family, id=id)
     eventos = TimelineEvent.objects.filter(family=family).order_by("data", "id")
 
+    logo_relativo = finders.find("img/logo-seapac.png")
+    logo_absoluto = Path(logo_relativo).resolve().as_uri()
+
     html_txt = render(
         request,
         "seapac/timeline/pdf_timeline.html",
-        {"family": family, "events": eventos},
+        {
+            "family": family,
+            "events": eventos,
+            "logo_path": logo_absoluto,
+        },
     ).content.decode("utf-8")
-    css_path = finders.find("css/timeline_pdf.css")
+    css_path = finders.find("css/pdfs/timeline_pdf.css")
     pdf = HTML(string=html_txt, base_url=request.build_absolute_uri("/")).write_pdf(
         stylesheets=[CSS(filename=css_path)]
     )
+
+    nome = slugify(family.nome_titular)
 
     response = HttpResponse(
         pdf,
         content_type="application/pdf",
     )
-    response["Content-Disposition"] = (
-        f'attachment; filename="timeline{family.nome_titular}.pdf"'
-    )
+    response["Content-Disposition"] = f'attachment; filename="timeline--{nome}.pdf"'
 
     return response
+
+
+@login_required
+@group_required("TECNICOS")
+def pdf_renda(request, id, ano):
+    family = get_object_or_404(Family, id=id)
+    renda = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    resultado = renda.calcular_renda()
+    logo_relativo = finders.find("img/logo-seapac.png")
+    logo_absoluto = (
+        Path(logo_relativo).resolve().as_uri()
+    )  # Transforma em caminho absoluto e deixa no modelo uri
+
+    contexto = {
+        "family": family,
+        "ano": ano,
+        "produtos": resultado["produtos"],
+        "total_receita": resultado["total_receita"],
+        "total_custo": resultado["total_custo"],
+        "renda_total": resultado["renda_total"],
+        "total_receita_potencial": resultado["total_receita_potencial"],
+        "renda_total_potencial": resultado["renda_total_potencial"],
+        "title": f"Renda da ",
+        "diferenca": resultado["diferenca"],
+        "logo_path": logo_absoluto,
+    }
+
+    html_txt = render_to_string(
+        "seapac/pdfs/pdf_renda.html",
+        contexto,
+        request=request,
+    )
+    css_path = finders.find("css/pdfs/renda_pdf.css")
+
+    pdf = HTML(string=html_txt, base_url=request.build_absolute_uri("/")).write_pdf(
+        stylesheets=[CSS(filename=css_path)]
+    )
+
+    nome = slugify(family.nome_titular)
+    response = HttpResponse(
+        pdf,
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = f'attachment; filename="renda--{nome}--{ano}.pdf"'
+    return response
+
+
+@login_required
+@group_required("TECNICOS")
+@xframe_options_sameorigin
+def pdf_flow(request, id, ano):
+    family = get_object_or_404(Family, id=id)
+    renda_ano = get_object_or_404(FamilyRenda, family=family, ano=ano)
+    family_subsystems = FamilySubsystem.objects.filter(
+        family_renda=renda_ano
+    ).select_related("subsystem")
+    # style_mode = request.GET.get("style", "default")
+
+    subsystems_data = []
+    for family_subsystem in family_subsystems:
+        subsystems_data.append(
+            {
+                "id": family_subsystem.subsystem.id,
+                "nome_subsistema": family_subsystem.subsystem.nome_subsistema,
+                "tipo": family_subsystem.subsystem.tipo,
+                "produtos_saida": family_subsystem.produtos_saida,
+            }
+        )
+
+    fluxos = []
+    for subsystem in subsystems_data:
+        nome_subsistema = subsystem["nome_subsistema"]
+        for produto in subsystem["produtos_saida"]:
+            nome_produto = produto["nome"]
+            fluxos_do_produto = produto.get("fluxos", [])
+
+            total_qtd = sum((f.get("qtd") or 0) for f in fluxos_do_produto)
+
+            for fluxo in fluxos_do_produto:
+                destino = fluxo.get("destino", "Mundo Externo")
+                qtd = fluxo.get("qtd")
+                und = fluxo.get("und", "")
+                porcentagem_calc = round((qtd / total_qtd) * 100, 1) if total_qtd else 0
+
+                rotulo_fluxo = nome_produto
+                if qtd:
+                    rotulo_fluxo += f" {qtd}"
+                if und:
+                    rotulo_fluxo += f" {und}"
+                if porcentagem_calc:
+                    rotulo_fluxo += f" {porcentagem_calc:.0f}%"
+
+                fluxos.append((nome_subsistema, rotulo_fluxo, destino))
+
+    text_list = []
+
+    for origem, produto, destino in fluxos:
+        origem_corrigida = origem.replace(" ", "_")
+        destino_corrigida = destino.replace(" ", "_")
+        text_list.append(f"{origem_corrigida} --{produto}--> {destino_corrigida}")
+
+    flux_count = {}
+    for origem, produto, destino in fluxos:
+        flux_count[origem] = flux_count.get(origem, 0) + 1
+
+    subsystems_com_fluxo = {nome for fluxo in fluxos for nome in (fluxo[0], fluxo[2])}
+
+    subsystems_sem_fluxo = [
+        s["nome_subsistema"].replace(" ", "_")
+        for s in subsystems_data
+        if s["nome_subsistema"] not in subsystems_com_fluxo
+    ]
+
+    click_lines = []
+    for s in subsystems_data:
+        subsystem_id = s["id"]
+        nome_subsistema = s["nome_subsistema"].replace(" ", "_")
+        host = request.get_host()
+        if ":" not in host:
+            host = f"{host}:82"
+        url = f"{request.scheme}://{host}{reverse('subsystem_panel', args=[family.id, subsystem_id, renda_ano.id])}"
+        click_lines.append(
+            f'click {nome_subsistema} href "{url}" "Abrir painel de {nome_subsistema}"'
+        )
+
+    for nome in subsystems_sem_fluxo:
+        text_list.append(f"{nome}")
+
+    def get_color_intensity(n, tipo):
+        if tipo == "TS":
+            if n <= 2:
+                return "#b7d8f5"
+            elif n <= 5:
+                return "#6eb5e7"
+            elif n <= 9:
+                return "#3690c2"
+            else:
+                return "#125877"
+        elif tipo == "ME":
+            if n <= 2:
+                return "#f7d26a"
+            elif n <= 5:
+                return "#f5b900"
+            elif n <= 9:
+                return "#c48f00"
+            else:
+                return "#7a5e00"
+        else:
+            if n <= 2:
+                return "#b7f5b7"
+            elif n <= 5:
+                return "#6ee76e"
+            elif n <= 9:
+                return "#36c236"
+            else:
+                return "#127712"
+
+    classDefSS = "classDef cssFlowSS stroke:#333,stroke-width:1px;"
+    classDefTS = "classDef cssFlowTS stroke:#333,stroke-width:1px;"
+
+    style_lines = []
+    for s in subsystems_data:
+        nome = s["nome_subsistema"].replace(" ", "_")
+        tipo = s.get("tipo", "SS")
+        n_fluxos = flux_count.get(s["nome_subsistema"], 0)
+        fill_color = get_color_intensity(n_fluxos, tipo)
+        style_lines.append(
+            f"style {nome} fill:{fill_color},stroke:#333,stroke-width:1px;"
+        )
+
+    me_nodes = [
+        s["nome_subsistema"].replace(" ", "_")
+        for s in subsystems_data
+        if s["tipo"] == "ME"
+    ]
+    if me_nodes:
+        mundo_externo = "subgraph Mundo Externo\n"
+        for node in me_nodes:
+            mundo_externo += f"    {node}\n"
+        mundo_externo += "end"
+    else:
+        mundo_externo = ""
+
+    diagram_lines = "\n".join(text_list)
+    style_lines_str = "\n".join(style_lines)
+    click_lines_str = "\n".join(click_lines)
+
+    conteudo_mermaid = f"""flowchart LR
+{mundo_externo}
+
+{classDefSS}
+{classDefTS}
+{diagram_lines}
+
+{click_lines_str}
+
+{style_lines_str}
+"""
+
+    nome = slugify(family.nome_titular)
+
+    context = {
+        "id": id,
+        "family": family,
+        "family_subsystems": family_subsystems,
+        # "style_mode": style_mode,
+        "title": "Fluxo",
+        "conteudo_mermaid": conteudo_mermaid,
+        "ano": ano,
+        "nome_familia_editado": nome,
+        # "nome_tecnico": request.get_user.nome_tecnico,
+    }
+
+    return render(request, "seapac/pdfs/pdf_flow.html", context=context)
 
 
 # ------------------------------------------------------------------------
