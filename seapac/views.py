@@ -1074,9 +1074,21 @@ def new_subsystem_to_family(request, id, ano):
     if request.method == "POST":
         subsystem_choice = request.POST.getlist("subsistemas")
 
-        for subsystem_id in subsystem_choice:
+        subsys_vinculados_ids = set(
+            FamilySubsystem.objects.filter(
+                family_renda=renda_ano
+            ).values_list("subsystem_id", flat=True)
+        )
+        subsys_selecionados_ids = set(map(int, subsystem_choice))
+
+        for subsystem_id in subsys_selecionados_ids - subsys_vinculados_ids:
             subsystem = get_object_or_404(Subsystem, id=subsystem_id)
             renda_ano.add_subsystem_to_family(subsystem)
+
+        FamilySubsystem.objects.filter(
+            family_renda=renda_ano,
+            subsystem_id__in=subsys_vinculados_ids - subsys_selecionados_ids
+        ).delete()
 
         return redirect("flow_list", id=family.id)
 
@@ -1095,6 +1107,7 @@ def new_subsystem_to_family(request, id, ano):
             "renda_ano": renda_ano,
             "subsystems": subsystems,
             "selected_ids": list(subsys_vinculados_ids),
+            "title": "Subsistemas"
         },
     )
 
